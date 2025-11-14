@@ -1,0 +1,21 @@
+# Terraform state files
+*.tfstate
+*.tfstate.*
+
+# Terraform lock file
+.terraform.lock.hcl
+
+# Local terraform directory
+.terraform/
+
+# Terraform variable files (THIS IS FOR YOUR SECRETS)
+*.tfvars
+*.tfvars.json
+
+# Crash log files
+crash.log
+
+# Mac junk
+.DS_Store
+.idea
+todo.md
