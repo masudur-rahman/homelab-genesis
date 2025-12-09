@@ -4,7 +4,7 @@ terraform {
   required_providers {
     proxmox = {
       source  = "bpg/proxmox"
-      version = "~> 0.89.0"
+      version = "~> 0.89.1"
     }
   }
 }
@@ -16,6 +16,7 @@ provider "proxmox" {
 
   ssh {
     agent = true
+    username = "root"
   }
 }
 
