@@ -1,18 +1,19 @@
-# Download the Debian 12 Cloud Image directly to Proxmox
 resource "proxmox_virtual_environment_download_file" "debian_12_cloud_image" {
-  content_type = "iso"
+  # "vztmpl" type forces Proxmox to unzip the QCOW2 to RAW on ZFS
+  content_type = "vztmpl"
+
   datastore_id = "local"
   node_name    = "pve"
   url          = "https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-generic-amd64.qcow2"
-  file_name    = "debian-12-generic-amd64.img"
+  file_name    = "debian-12-generic-amd64.qcow2.tar.gz"
 }
 
 # Define the "Template
 resource "proxmox_virtual_environment_vm" "debian_12_template" {
   name      = "debian-12-cloudinit"
   node_name = "pve"
-  template = true
-  started = false
+  template  = true
+  started   = false
 
   agent {
     enabled = true
@@ -41,7 +42,6 @@ resource "proxmox_virtual_environment_vm" "debian_12_template" {
     bridge = "vmbr0"
   }
 
-  # This is the "ide2" cloud-init drive equivalent
   initialization {
     datastore_id = "local-zfs"
     ip_config {
