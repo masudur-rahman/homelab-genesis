@@ -7,7 +7,17 @@ terraform {
   }
 }
 
+# Calculate Network Logic Once (Local Variables)
+locals {
+  # Use Pool Override if present, otherwise Global Default
+  final_gateway = var.pool_gateway != null ? var.pool_gateway : var.common_gateway
+  final_cidr    = var.pool_cidr != null ? var.pool_cidr : var.common_cidr
+}
+
+# Generate Cloud-Init File (One per VM instance)
 resource "proxmox_virtual_environment_file" "user_data_cloud_config" {
+  count = var.vm_count
+
   content_type = "snippets"
   datastore_id = "local"
   node_name    = var.node_name
@@ -15,21 +25,26 @@ resource "proxmox_virtual_environment_file" "user_data_cloud_config" {
   source_raw {
     data = <<EOF
 #cloud-config
-hostname: ${var.name}
+hostname: ${var.pool_name}-${format("%02d", count.index + 1)}
 manage_etc_hosts: true
 timezone: Asia/Dhaka
+
 users:
   - default
-  - name: debian
+  - name: unknown
     groups: [sudo]
     shell: /bin/bash
     sudo: ALL=(ALL) NOPASSWD:ALL
     lock_passwd: false
-    passwd: debian
     ssh_authorized_keys:
 %{for key in var.ssh_keys~}
       - ${key}
 %{endfor~}
+
+chpasswd:
+  list: |
+    unknown:ojana
+  expire: false
 
 package_update: true
 packages:
@@ -43,19 +58,24 @@ runcmd:
   - systemctl start qemu-guest-agent
   - echo "Cloud-Init Complete"
   - echo "Agent Started" > /tmp/agent-status.txt
+  - chage -d $(date +%Y-%m-%d) debian
+  - chage -M 99999 debian
 EOF
 
-    file_name = "user-data-${var.name}-cloud-config.yaml"
+    file_name = "user-data-${var.pool_name}-${format("%02d", count.index + 1)}.yaml"
   }
 }
 
+# Create the VMs
 resource "proxmox_virtual_environment_vm" "debian_vm" {
-  name      = var.name
+  count = var.vm_count
+
+  name      = "${var.pool_name}-${format("%02d", count.index + 1)}"
   node_name = var.node_name
   pool_id   = var.pool_id
   started   = true
+  tags      = split(",", var.tags) # Convert string "dev,test" to list
 
-  # 👇 CLONE THE TEMPLATE (This gives us a working Disk)
   clone {
     vm_id = var.template_vm_id
   }
@@ -67,13 +87,23 @@ resource "proxmox_virtual_environment_vm" "debian_vm" {
   scsi_hardware = "virtio-scsi-single"
 
   cpu {
-    cores = var.cpu_cores
+    cores = var.cpu
     type  = "x86-64-v2-AES"
+    numa  = true
   }
 
   memory {
-    dedicated = var.memory_mb
-    floating  = var.memory_mb
+    dedicated = var.memory
+    floating  = var.memory
+  }
+
+  disk {
+    datastore_id = "local-zfs"
+    interface    = "scsi0"
+    iothread     = true
+    discard      = "on"
+    size         = var.disk
+    file_format  = "raw"
   }
 
   network_device {
@@ -85,13 +115,13 @@ resource "proxmox_virtual_environment_vm" "debian_vm" {
   }
 
   initialization {
-    datastore_id = "local-zfs"
-    user_data_file_id = proxmox_virtual_environment_file.user_data_cloud_config.id
+    datastore_id      = "local-zfs"
+    user_data_file_id = proxmox_virtual_environment_file.user_data_cloud_config[count.index].id
 
     ip_config {
       ipv4 {
-        address = var.ipv4_address
-        gateway = var.ipv4_gateway
+        address = "${cidrhost(local.final_cidr, var.ip_start + count.index)}/24"
+        gateway = local.final_gateway
       }
     }
   }

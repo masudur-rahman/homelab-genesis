@@ -6,22 +6,17 @@ output "proxmox_virtual_environment_version" {
   }
 }
 
-# output "debian_template_id" {
-#   value       = proxmox_virtual_environment_vm.debian_12_template.vm_id
-#   description = "The ID of the Debian 12 Cloud-Init Template"
-# }
-
-output "deployed_vms" {
+output "cluster_nodes" {
+  description = "Deployed VMs grouped by Node Pool"
   value = {
-    for instance in module.debian_vms :
-    instance.vm_name => instance.vm_ip_address
+    for pool_name, pool_module in module.node_pools :
+    pool_name => pool_module.vm_info
   }
-  description = "Map of VM Names to IP Addresses"
 }
 
-output "debian_vm_ips" {
-  value = {
-    for k, v in module.debian_vms : k => v.vm_ip_address
-  }
-  description = "The IP addresses of the deployed Debian VMs"
+output "all_ips" {
+  description = "Flattened list of all IP addresses"
+  value = flatten([
+    for pool in module.node_pools : values(pool.vm_info)
+  ])
 }

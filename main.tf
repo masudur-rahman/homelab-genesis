@@ -22,24 +22,33 @@ provider "proxmox" {
 
 data "proxmox_virtual_environment_version" "pm_version" {}
 
-module "debian_vms" {
+module "node_pools" {
   source = "./modules/proxmox-debian-vm"
 
-  for_each = var.debian_vms
+  for_each = var.node_pools
 
-  node_name = "pve"
-  pool_id   = proxmox_virtual_environment_pool.development.pool_id
-
+  node_name      = "pve"
+  pool_id        = proxmox_virtual_environment_pool.development.pool_id
   template_vm_id = proxmox_virtual_environment_vm.debian_12_template.vm_id
-  disk_file_id   = proxmox_virtual_environment_download_file.debian_12_cloud_image.id
+  ssh_keys       = var.ssh_public_keys
 
-  name         = each.key
-  cpu_cores    = each.value.cpu_cores
-  memory_mb    = each.value.memory_mb
-  disk_size_gb = each.value.disk_size_gb
-  ipv4_address = each.value.ipv4_address
-  ipv4_gateway = each.value.ipv4_gateway
+  pool_name = each.key
 
-  ssh_keys      = var.ssh_public_keys
-  template_name = ""
+  # Pass the Pool Configuration Object
+  vm_count = each.value.vm_count
+  tags     = each.value.tags
+
+  # Hardware
+  cpu    = each.value.cpu
+  memory = each.value.memory
+  disk   = each.value.disk
+
+  # Network Logic (Pool Specific)
+  ip_start     = each.value.ip_start
+  pool_gateway = each.value.gateway
+  pool_cidr    = each.value.cidr
+
+  # Global Defaults (For fallback inside the module)
+  common_gateway = var.common_gateway
+  common_cidr    = var.common_cidr
 }

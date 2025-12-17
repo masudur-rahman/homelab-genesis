@@ -15,22 +15,36 @@ variable "pm_insecure" {
   description = "Whether to ignore SSL certificate errors (true for self-signed certs)"
 }
 
-variable "debian_vms" {
-  description = "Map of Debian VMs to deploy"
-  type = map(object({
-    desc         = string
-    cpu_cores    = number
-    memory_mb    = number
-    disk_size_gb = number
-    ipv4_address = string
-    ipv4_gateway = string
-    tags         = string
-  }))
-  default = {}
+variable "common_gateway" {
+  description = "Default Gateway IP (fallback if not defined in pool)"
+  type        = string
+}
+
+variable "common_cidr" {
+  description = "Default Network CIDR (fallback if not defined in pool)"
+  type        = string
 }
 
 variable "ssh_public_keys" {
-  description = "List of public SSH keys to inject"
+  description = "List of SSH public keys"
   type        = list(string)
-  default     = []
+}
+
+variable "node_pools" {
+  description = "Map of Node Pools"
+  type = map(object({
+    desc     = string
+    vm_count = number
+    tags     = string
+
+    cpu    = number
+    memory = number
+    disk   = number
+
+    ip_start = number # e.g. 50 starts at .50
+
+    gateway = optional(string)
+    cidr    = optional(string)
+  }))
+  default = {}
 }
