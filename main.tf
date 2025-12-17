@@ -27,10 +27,11 @@ module "node_pools" {
 
   for_each = var.node_pools
 
-  node_name      = "pve"
-  pool_id        = proxmox_virtual_environment_pool.development.pool_id
-  template_vm_id = proxmox_virtual_environment_vm.debian_12_template.vm_id
-  ssh_keys       = var.ssh_public_keys
+  node_name        = "pve"
+  pool_id          = proxmox_virtual_environment_pool.development.pool_id
+  template_vm_id   = proxmox_virtual_environment_vm.debian_12_template.vm_id
+  ci_template_path = "${path.root}/templates/cloud-init.tftpl"
+  ssh_keys         = var.ssh_public_keys
 
   pool_name = each.key
 

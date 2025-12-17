@@ -23,44 +23,12 @@ resource "proxmox_virtual_environment_file" "user_data_cloud_config" {
   node_name    = var.node_name
 
   source_raw {
-    data = <<EOF
-#cloud-config
-hostname: ${var.pool_name}-${format("%02d", count.index + 1)}
-manage_etc_hosts: true
-timezone: Asia/Dhaka
-
-users:
-  - default
-  - name: unknown
-    groups: [sudo]
-    shell: /bin/bash
-    sudo: ALL=(ALL) NOPASSWD:ALL
-    lock_passwd: false
-    ssh_authorized_keys:
-%{for key in var.ssh_keys~}
-      - ${key}
-%{endfor~}
-
-chpasswd:
-  list: |
-    unknown:ojana
-  expire: false
-
-package_update: true
-packages:
-  - qemu-guest-agent
-  - net-tools
-  - curl
-
-runcmd:
-  - systemctl unmask qemu-guest-agent
-  - systemctl enable qemu-guest-agent
-  - systemctl start qemu-guest-agent
-  - echo "Cloud-Init Complete"
-  - echo "Agent Started" > /tmp/agent-status.txt
-  - chage -d $(date +%Y-%m-%d) debian
-  - chage -M 99999 debian
-EOF
+    data = templatefile(var.ci_template_path, {
+      hostname = "${var.pool_name}-${format("%02d", count.index + 1)}"
+      username = "unknown"
+      password = "ojana"
+      ssh_keys = var.ssh_keys
+    })
 
     file_name = "user-data-${var.pool_name}-${format("%02d", count.index + 1)}.yaml"
   }

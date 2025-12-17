@@ -41,3 +41,8 @@ variable "pool_id" { type = string }
 variable "template_vm_id" { type = number }
 # variable "disk_file_id" { type = string }
 variable "ssh_keys" { type = list(string) }
+
+variable "ci_template_path" {
+  description = "Path to the Cloud-Init template file"
+  type        = string
+}
