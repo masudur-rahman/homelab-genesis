@@ -29,7 +29,8 @@ module "node_pools" {
 
   node_name        = "pve"
   pool_id          = proxmox_virtual_environment_pool.development.pool_id
-  template_vm_id   = proxmox_virtual_environment_vm.debian_12_template.vm_id
+  cloud_image_id   = proxmox_virtual_environment_download_file.debian_12_cloud_image.id
+  # template_vm_id   = proxmox_virtual_environment_vm.debian_12_template.vm_id
   ci_template_path = "${path.root}/templates/cloud-init.tftpl"
   ssh_keys         = var.ssh_public_keys
 

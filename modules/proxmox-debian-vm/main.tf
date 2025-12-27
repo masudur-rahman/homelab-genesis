@@ -44,9 +44,9 @@ resource "proxmox_virtual_environment_vm" "debian_vm" {
   started   = true
   tags      = split(",", var.tags) # Convert string "dev,test" to list
 
-  clone {
-    vm_id = var.template_vm_id
-  }
+  # clone {
+  #   vm_id = var.template_vm_id
+  # }
 
   agent {
     enabled = true
@@ -67,6 +67,7 @@ resource "proxmox_virtual_environment_vm" "debian_vm" {
 
   disk {
     datastore_id = "local-zfs"
+    import_from  = var.cloud_image_id
     interface    = "scsi0"
     iothread     = true
     discard      = "on"

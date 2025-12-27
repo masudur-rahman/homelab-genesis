@@ -1,11 +1,10 @@
 resource "proxmox_virtual_environment_download_file" "debian_12_cloud_image" {
-  # "vztmpl" type forces Proxmox to unzip the QCOW2 to RAW on ZFS
-  content_type = "vztmpl"
+  content_type = "import"
 
   datastore_id = "local"
   node_name    = "pve"
   url          = "https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-generic-amd64.qcow2"
-  file_name    = "debian-12-generic-amd64.qcow2.tar.gz"
+  file_name    = "debian-12-generic-amd64.qcow2"
 }
 
 # Define the "Template
@@ -33,7 +32,7 @@ resource "proxmox_virtual_environment_vm" "debian_12_template" {
     interface    = "scsi0"
     iothread     = true
     discard      = "on"
-    size         = 10
+    size         = 5
     file_id      = proxmox_virtual_environment_download_file.debian_12_cloud_image.id
     file_format  = "raw"
   }
