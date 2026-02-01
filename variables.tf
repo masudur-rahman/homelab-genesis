@@ -14,6 +14,12 @@ variable "pm_insecure" {
   default     = true
   description = "Whether to ignore SSL certificate errors (true for self-signed certs)"
 }
+# --- Global Defaults ---
+variable "proxmox_node" {
+  description = "Name of the Proxmox Node"
+  type        = string
+  default     = "pve"
+}
 
 variable "common_gateway" {
   description = "Default Gateway IP (fallback if not defined in pool)"
@@ -26,8 +32,45 @@ variable "common_cidr" {
 }
 
 variable "ssh_public_keys" {
-  description = "List of SSH public keys"
+  description = "List of SSH public keys for VMs"
   type        = list(string)
+}
+
+
+variable "common_pool" {
+  description = "Default pool for VMs if not specified"
+  type        = string
+  default     = ""
+}
+
+variable "iso_images" {
+  type = map(string)
+  default = {
+    "debian-12" = "https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-generic-amd64.qcow2"
+  }
+}
+
+variable "talos_version" {
+  type    = string
+  default = ""
+}
+
+# --- Standard VMs (Debian/Ubuntu) ---
+variable "debian_vms" {
+  description = "Standard VMs using Cloud-Init"
+  type = map(object({
+    desc     = string
+    pool     = optional(string)
+    vm_count = number
+    tags     = string
+    cpu      = number
+    memory   = number
+    disk     = number
+    ip_start = number
+    gateway  = optional(string)
+    cidr     = optional(string)
+  }))
+  default = {}
 }
 
 variable "node_pools" {
@@ -46,5 +89,17 @@ variable "node_pools" {
     gateway = optional(string)
     cidr    = optional(string)
   }))
+  default = {}
+}
+
+# --- Flatcar VMs (Placeholder) ---
+variable "flatcar_vms" {
+  type    = map(any)
+  default = {}
+}
+
+# --- Talos Clusters (Placeholder) ---
+variable "talos_clusters" {
+  type    = map(any)
   default = {}
 }

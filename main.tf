@@ -1,56 +1,52 @@
-terraform {
-  required_version = ">= 1.6.0"
-
-  required_providers {
-    proxmox = {
-      source  = "bpg/proxmox"
-      version = "~> 0.89.1"
-    }
-  }
+locals {
+  resource_pools = sort(distinct(compact(concat(
+    [for k, v in var.debian_vms : v.pool],
+    # [for k, v in var.flatcar_vms : v.pool],
+    # [for k, v in var.talos_clusters : v.pool],
+    [var.common_pool]
+  ))))
 }
 
-provider "proxmox" {
-  endpoint  = var.pm_api_endpoint
-  api_token = var.pm_api_token
-  insecure  = var.pm_insecure
-
-  ssh {
-    agent    = true
-    username = "root"
-  }
+module "structure" {
+  source = "./modules/structure"
+  pools  = local.resource_pools
 }
 
-data "proxmox_virtual_environment_version" "pm_version" {}
+module "bootstrap" {
+  source       = "./modules/bootstrap"
+  proxmox_node = var.proxmox_node
+  iso_images   = var.iso_images
+  talos_version = var.talos_version
+}
 
-module "node_pools" {
-  source = "./modules/proxmox-debian-vm"
+module "vm_standard" {
+  source   = "./modules/vm-standard"
+  for_each = var.debian_vms
 
-  for_each = var.node_pools
+  # Global Inputs
+  proxmox_node   = var.proxmox_node
+  common_gateway = var.common_gateway
+  common_cidr    = var.common_cidr
+  ssh_keys       = var.ssh_public_keys
 
-  node_name        = "pve"
-  pool_id          = proxmox_virtual_environment_pool.development.pool_id
-  cloud_image_id   = proxmox_virtual_environment_download_file.debian_12_cloud_image.id
-  # template_vm_id   = proxmox_virtual_environment_vm.debian_12_template.vm_id
-  ci_template_path = "${path.root}/templates/cloud-init.tftpl"
-  ssh_keys         = var.ssh_public_keys
+  # Image Source
+  cloud_image_id = module.bootstrap.debian_12_id
 
-  pool_name = each.key
-
-  # Pass the Pool Configuration Object
+  # Per-VM Configuration
+  name     = each.key
+  desc     = each.value.desc
   vm_count = each.value.vm_count
   tags     = each.value.tags
+  cpu      = each.value.cpu
+  memory   = each.value.memory
+  disk     = each.value.disk
+  ip_start = each.value.ip_start
 
-  # Hardware
-  cpu    = each.value.cpu
-  memory = each.value.memory
-  disk   = each.value.disk
-
-  # Network Logic (Pool Specific)
-  ip_start     = each.value.ip_start
   pool_gateway = each.value.gateway
   pool_cidr    = each.value.cidr
 
-  # Global Defaults (For fallback inside the module)
-  common_gateway = var.common_gateway
-  common_cidr    = var.common_cidr
+  pool_id = module.structure.pool_ids[coalesce(each.value.pool, var.common_pool)]
 }
+
+# Future: module "vm_flatcar" { ... }
+# Future: module "vm_talos" { ... }

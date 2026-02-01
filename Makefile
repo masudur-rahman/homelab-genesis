@@ -1,37 +1,48 @@
 # 🛠️ Project Genesis Makefile
+ENV ?= compute
 
-# 1. Find all .tfvars files recursively (in vars/dev, vars/prod, etc.)
-# We use 'shell find' because standard Make wildcards don't do recursion well
-VAR_FILES := $(shell find vars -name "*.tfvars")
+export TF_DATA_DIR := states/.terraform
 
-# 2. Format them into flags
-TF_FLAGS := $(foreach file,$(VAR_FILES),-var-file="$(file)")
+COMMON_VARS := vars/common.tfvars
+ENV_VAR_FILES := $(wildcard vars/$(ENV)/*.tfvars)
+TF_VAR_ARGS := -var-file="$(COMMON_VARS)" $(foreach file,$(ENV_VAR_FILES),-var-file="$(file)")
 
-.PHONY: all init plan apply refresh destroy fmt validate output console
-
-all: plan
+.PHONY: init plan apply destroy workspace fmt validate output init_reconfigure
 
 init:
-	@echo "🚀 Initializing Terraform..."
+	@mkdir -p states
+	@echo "🔧 Initializing Terraform into [states/]..."
 	terraform init
 
-plan:
-	@echo "🔮 Planning infrastructure..."
-	# Prints which var files are being loaded (for debugging)
-	@echo "   Loading vars: $(VAR_FILES)"
-	terraform plan $(TF_FLAGS)
+init_reconfigure:
+	@mkdir -p states
+	@echo "🔧 Initializing Terraform into [states/]..."
+	terraform init -reconfigure
 
-apply:
-	@echo "🏗️  Applying changes..."
-	terraform apply $(TF_FLAGS)
+init_upgrade:
+	@mkdir -p states
+	@echo "🔧 Initializing Terraform into [states/]..."
+	terraform init -upgrade
 
-refresh:
-	@echo "🔄 Refreshing state..."
-	terraform apply -refresh-only $(TF_FLAGS)
+workspace:
+	@echo "🔀 Using environment: [$(ENV)]..."
+	@terraform workspace select $(ENV) 2>/dev/null || terraform workspace new $(ENV)
 
-destroy:
-	@echo "🔥 DESTROYING Infrastructure..."
-	terraform destroy $(TF_FLAGS)
+plan: workspace
+	@echo "📋 Planning infrastructure for [$(ENV)]..."
+	terraform plan $(TF_VAR_ARGS)
+
+apply: workspace
+	@echo "🚀 Applying changes to [$(ENV)]..."
+	terraform apply $(TF_VAR_ARGS)
+
+refresh: workspace
+	@echo "🔄 Refreshing state for [$(ENV)]..."
+	terraform apply -refresh-only $(TF_VAR_ARGS)
+
+destroy: workspace
+	@echo "🔥 DESTROYING $(ENV) Infrastructure..."
+	terraform destroy $(TF_VAR_ARGS)
 
 fmt:
 	@echo "🧹 Formatting code..."
@@ -39,7 +50,8 @@ fmt:
 
 validate:
 	@echo "✅ Validating configuration..."
+	terraform init -backend=false # Validate needs providers present
 	terraform validate
 
-output:
+output: workspace
 	terraform output
