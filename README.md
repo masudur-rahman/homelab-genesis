@@ -1,197 +1,148 @@
-# 🚀 HomeLab Genesis (Proxmox + Terraform)
+# HomeLab Genesis (Proxmox + Terraform)
 
-This repository contains the complete Infrastructure as Code (IaC) for my Proxmox homelab. The core principle here is **full automation**—the entire environment is defined, provisioned, and managed by Terraform. No manual intervention. This ensures the lab is 100% reproducible, stable, and can be rebuilt or modified with confidence.
+Terraform IaC for provisioning and managing Proxmox VMs in a homelab environment. The entire environment is defined, provisioned, and managed by Terraform — no manual intervention.
 
------
+---
 
-## ✨ The Philosophy
+## Philosophy
 
-The goal of `homelab-genesis` is to treat my homelab like a production environment. The core ideas:
+- **Automate Everything:** No "clicking around" in the Proxmox UI. If it's not in Terraform, it doesn't exist.
+- **Built to Rebuild:** The entire lab can be destroyed and brought back to life in minutes.
+- **Keep it Modular:** Each VM type (Debian, Talos, Flatcar) is its own Terraform module.
+- **Data > Logic:** The "what" (VM counts, specs) lives in `.tfvars` files. The "how" (build logic) lives in the modules.
 
-* **Automate Everything:** No "clicking around" in the Proxmox UI. If it's not in Terraform, it doesn't exist.
-* **Built to Rebuild:** The entire lab can be destroyed and brought back to life in minutes. This makes it fearless to test new things.
-* **Keep it Modular:** Each VM type (Talos, Flatcar, etc.) is its own "Lego brick" (a Terraform module), so the setup is clean and easy to grow.
-* **Data \> Logic:** The "what" (like *how many* VMs) lives in `.tfvars` files. The "how" (the build logic) lives in the modules.
+---
 
------
+## Tech Stack
 
-## 🛠️ The Tech Stack
+- **Virtualization:** Proxmox VE 8.x (HP EliteBook, 32GB RAM)
+- **IaC:** Terraform >= 1.6.0
+- **Provider:** [bpg/proxmox](https://registry.terraform.io/providers/bpg/proxmox/latest) ~> 0.93.0
+- **VM Types:**
+  - Debian 12 (Cloud-Init) — gateways, app servers
+  - Talos OS (Image Factory) — Kubernetes cluster (planned)
+  - Flatcar Container Linux — lightweight containers (planned)
 
-* **Virtualization:** Proxmox VE
-* **IaC:** Terraform
-* **The Provider:** `bpg/proxmox` (it's actively maintained and works well)
-* **The "Lego Bricks" (VMs):**
-    * Talos OS (for Kubernetes)
-    * Flatcar Container Linux (for container-only stuff)
-    * Debian (for everything else)
-* **Provisioning:** Good ol' Cloud-Init and Butane
+---
 
------
-
-## 🏗️ How It's Structured
-
-This layout is designed to be clean, scalable, and easy to understand.
+## Project Structure
 
 ```
-/homelab-genesis/
+homelab-genesis/
 |
-|-- main.tf             # The main entrypoint. Connects providers & calls modules.
-|-- variables.tf        # Global variables (like API credentials).
-|-- terraform.tfvars    # 🤫 My secrets! (In .gitignore, of course).
-|-- pools.tf            # Defines the Proxmox Resource Pools (e.g., "prod" & "dev").
-|-- .gitignore          # The list of files to ignore.
+|-- main.tf              # Root entrypoint, calls all modules
+|-- variables.tf         # Global input variables
+|-- outputs.tf           # Root outputs (per-module VM details)
+|-- terraform.tf         # Provider & backend config (local + workspaces)
+|-- Makefile             # Workflow commands (init, plan, apply, destroy)
 |
-|-- 📁 vars/             # This is "what to build."
-|   |-- 00-proxmox-host.tfvars    # Host details (which node, storage, etc.)
-|   |-- 01-cluster-talos.tfvars   # Defines my Talos K8s cluster.
-|   |-- 02-cluster-flatcar.tfvars # Defines my Flatcar VMs.
-|   `-- 03-apps-debian.tfvars     # Defines my general-purpose Debian VMs.
+|-- vars/                # Environment-specific variable files
+|   |-- common.tfvars           # Shared settings (Proxmox host, storage, network)
+|   |-- infra/
+|   |   `-- gateways.tfvars     # Gateway/VPN VM definitions
+|   `-- compute/
+|       |-- settings.tfvars     # Compute workspace settings
+|       |-- debian.tfvars       # Debian app VM definitions
+|       |-- talos.tfvars        # Talos K8s cluster config (WIP)
+|       `-- flatcar.tfvars      # Flatcar VM config (WIP)
 |
-|-- 📁 templates/          # This is "how to configure the VMs."
-|   |-- talos-control-plane.bu.tftpl  # Butane template for Talos control plane.
-|   |-- talos-worker.bu.tftpl         # Butane template for Talos workers.
-|   |-- flatcar.bu.tftpl              # Butane template for Flatcar.
-|   `-- debian-cloudinit.yml.tftpl    # Cloud-Init for Debian.
+|-- modules/
+|   |-- bootstrap/       # Downloads base images (Debian QCOW2, Talos ISO)
+|   |-- structure/       # Creates Proxmox resource pools
+|   |-- vm-standard/     # Provisions Debian VMs with cloud-init
+|   |-- vm-talos/        # (stub) Talos K8s VM provisioning
+|   `-- vm-flatcar/      # (stub) Flatcar Container Linux provisioning
 |
-`-- 📁 modules/            # This is "how to build the VMs."
-    |-- proxmox-talos-vm/     # The "Lego brick" for building one Talos VM.
-    |   |-- main.tf
-    |   |-- variables.tf
-    |   `-- outputs.tf
-    |
-    |-- proxmox-flatcar-vm/   # The "Lego brick" for one Flatcar VM.
-    |   `-- ...
-    |
-    `-- proxmox-debian-vm/    # The "Lego brick" for one Debian VM.
-        `-- ...
+|-- templates/           # Root-level cloud-init templates (legacy)
+`-- states/              # Local terraform state (workspace-based)
 ```
 
------
+---
 
-## 🚀 Getting Started
+## Workspaces
 
-### What You'll Need
+Terraform workspaces separate environments:
 
-* A running Proxmox VE 8.x server.
-* Terraform (I'm using v1.6+).
-* A Proxmox API Token (with permissions for VMs, storage, etc.).
-* The OS templates (Talos, Flatcar, Debian Cloud-Init) uploaded to Proxmox.
+| Workspace | Purpose | VMs |
+|-----------|---------|-----|
+| `infra` | Network infrastructure | Gateway/VPN (2x Debian, 1GB/1vCPU) |
+| `compute` | Application workloads | Portal (2GB/2vCPU), Data (8GB/4vCPU), Expense-tracker (2GB/2vCPU) |
 
------
+---
 
-### 1\. Clone It
+## Getting Started
+
+### Prerequisites
+
+- Proxmox VE 8.x server
+- Terraform >= 1.6.0
+- Proxmox API Token with VM/storage permissions
+
+### 1. Clone & Initialize
 
 ```bash
-git clone <your-repo-url>
+git clone <repo-url>
 cd homelab-genesis
+make init
 ```
 
------
+### 2. Set Up Secrets
 
-### 2\. Set Up Your Secrets
-
-Terraform needs to log in. Create a `terraform.tfvars` file (it's already in `.gitignore`, so you won't accidentally commit it).
+Create `terraform.tfvars` (already in `.gitignore`):
 
 ```hcl
-# terraform.tfvars
-pm_api_url   = "https://proxmox.example.com:8006/api2/json"
-pm_api_token_id     = "terraform@pve!my-token"
-pm_api_token_secret = "your-secret-uuid"
+proxmox_api_url    = "https://proxmox.example.com:8006/api2/json"
+proxmox_api_token  = "terraform@pve!my-token=your-secret-uuid"
 ```
 
------
-
-### 3\. Tell Terraform About Your Host
-
-Create `vars/00-proxmox-host.tfvars` to point to your specific Proxmox setup.
-
-```hcl
-# vars/00-proxmox-host.tfvars
-proxmox_host_node = "pve"        # The name of your Proxmox node
-storage_pool_vms  = "local-zfs"  # Where to put the VM disks
-storage_pool_iso  = "local"      # Where to find your ISOs/templates
-```
-
------
-
-### 4\. Define Your VMs
-
-The files in `vars/` are where you decide what to build. This keeps your main files clean.
-
-**Example: `vars/01-cluster-talos.tfvars`**
-
-```hcl
-talos_control_plane_count = 3
-talos_worker_count        = 2
-
-talos_vm_defaults = {
-  disk_size_gb = 20
-  memory_mb    = 2048
-  vcpu_count   = 2
-}
-```
-
-**Example: `vars/03-apps-debian.tfvars`**
-
-```hcl
-debian_vm_count = 4
-
-debian_vm_defaults = {
-  memory_mb  = 2048
-  vcpu_count = 2
-}
-```
-
------
-
-## ⚡ Let's Run It\!
-
-### Initialize
-
-This downloads the Proxmox provider.
+### 3. Plan & Apply
 
 ```bash
-terraform init
+# Infrastructure (gateways)
+make plan ENV=infra
+make apply ENV=infra
+
+# Compute (app VMs)
+make plan ENV=compute
+make apply ENV=compute
 ```
 
-### Plan
+---
 
-This shows you *what* Terraform is about to do. Notice we have to pass in the `.tfvars` files.
+## Makefile Commands
 
 ```bash
-terraform plan \
-  -var-file="vars/00-proxmox-host.tfvars" \
-  -var-file="vars/01-cluster-talos.tfvars"
+make init              # terraform init
+make workspace ENV=x   # switch/create workspace
+make plan ENV=x        # terraform plan with env-specific tfvars
+make apply ENV=x       # terraform apply
+make refresh ENV=x     # refresh state only
+make destroy ENV=x     # terraform destroy
+make fmt               # format .tf files recursively
+make validate          # validate configuration
+make output ENV=x      # show outputs
 ```
 
-### Apply
+---
 
-This is the fun part.
+## Current Status
 
-```bash
-terraform apply \
-  -var-file="vars/00-proxmox-host.tfvars" \
-  -var-file="vars/01-cluster-talos.tfvars"
-```
+### Implemented (5 VMs)
+- 2x Gateway/VPN (Debian, 1GB RAM, 1 vCPU, 8GB disk) — `infra` workspace
+- 1x Portal (Debian, 2GB RAM, 2 vCPU, 32GB disk) — `compute` workspace
+- 1x Data (Debian, 8GB RAM, 4 vCPU, 100GB disk) — `compute` workspace
+- 1x Expense-tracker (Debian, 2GB RAM, 2 vCPU, 20GB disk) — `compute` workspace
 
-> **Heads Up:** Terraform doesn't auto-load `.tfvars` files from subfolders. You always have to pass them in with the `-var-file` flag, which is actually great for controlling *what* you deploy.
+### Planned
+- 3x Talos OS control plane nodes (K8s)
+- 2x Talos OS worker nodes (K8s)
+- 2x Flatcar Container Linux VMs
+- 1x Monitoring/utility VM
 
------
+---
 
-## 🌱 How to Grow This Lab
+## Adding New VMs
 
-Want to add a new group of VMs (like for monitoring)?
-
-1.  Create a new `04-monitoring-vms.tfvars` file in `vars/`.
-2.  Add a new `module "monitoring_vms" { ... }` block in `main.tf` that uses your new file and re-uses an existing module (like `proxmox-debian-vm`).
-
-The whole setup is built to scale this way.
-
------
-
-## 🌟 The Payoff
-
-* Your entire lab is defined in code and backed up in Git.
-* No more "configuration drift" or wondering *why* you made a change.
-* You get a repeatable, idempotent setup.
-* It's a clean, extendable foundation.
+1. Add VM definitions to the appropriate `vars/<workspace>/*.tfvars` file
+2. If needed, add a new `module` block in `main.tf`
+3. Run `make plan ENV=<workspace>` to preview, then `make apply ENV=<workspace>`

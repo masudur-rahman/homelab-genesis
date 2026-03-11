@@ -19,3 +19,5 @@ crash.log
 .DS_Store
 .idea
 todo.md
+.claude/settings.local.json
+.claude/plan.md
