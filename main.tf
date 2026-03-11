@@ -16,7 +16,7 @@ module "bootstrap" {
   source       = "./modules/bootstrap"
   proxmox_node = var.proxmox_node
   iso_images   = var.iso_images
-  talos_version = var.talos_version
+  talos_images = var.talos_images
 }
 
 module "vm_standard" {
