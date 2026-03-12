@@ -12,6 +12,17 @@ variable "common_gateway" { type = string }
 variable "common_cidr" { type = string }
 variable "ssh_keys" { type = list(string) }
 variable "pool_id" { type = string } # Required
+variable "vm_user" {
+  description = "Default username for VM cloud-init"
+  type        = string
+}
+
+variable "vm_password" {
+  description = "Default password for VM cloud-init"
+  type        = string
+  sensitive   = true
+}
+
 variable "pool_gateway" {
   type    = string
   default = null

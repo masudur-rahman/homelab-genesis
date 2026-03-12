@@ -8,9 +8,13 @@
 # Local terraform directory
 .terraform/
 
-# Terraform variable files (THIS IS FOR YOUR SECRETS)
+# Terraform variable files (secrets)
 *.tfvars
 *.tfvars.json
+
+# Plaintext secrets (decrypted by sops)
+vars/secrets.tfvars
+vars/secrets.json
 
 # Crash log files
 crash.log

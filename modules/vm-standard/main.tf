@@ -21,8 +21,8 @@ resource "proxmox_virtual_environment_file" "user_data_cloud_config" {
   source_raw {
     data = templatefile("${path.module}/templates/cloud-init.tftpl", {
       hostname = "${var.name}-${format("%02d", count.index + 1)}"
-      username = "unknown"
-      password = "ojana"
+      username = var.vm_user
+      password = var.vm_password
       ssh_keys = var.ssh_keys
     })
     file_name = "user-data-${terraform.workspace}-${var.name}-${format("%02d", count.index + 1)}.yaml"

@@ -60,6 +60,17 @@ variable "talos_images" {
   default = {}
 }
 
+variable "vm_user" {
+  description = "Default username for VM cloud-init"
+  type        = string
+}
+
+variable "vm_password" {
+  description = "Default password for VM cloud-init"
+  type        = string
+  sensitive   = true
+}
+
 # --- Standard VMs (Debian/Ubuntu) ---
 variable "debian_vms" {
   description = "Standard VMs using Cloud-Init"

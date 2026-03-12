@@ -24,6 +24,8 @@ module "vm_standard" {
   for_each = var.debian_vms
 
   # Global Inputs
+  vm_user        = var.vm_user
+  vm_password    = var.vm_password
   proxmox_node   = var.proxmox_node
   common_gateway = var.common_gateway
   common_cidr    = var.common_cidr
