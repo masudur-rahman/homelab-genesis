@@ -1,0 +1,34 @@
+{
+  "ignition": {
+    "version": "3.3.0"
+  },
+  "passwd": {
+    "users": [
+      {
+        "name": "core",
+        "groups": ["sudo", "docker"],
+        "sshAuthorizedKeys": ${jsonencode(ssh_keys)}
+      }
+    ]
+  },
+  "storage": {
+    "files": [
+      {
+        "path": "/etc/hostname",
+        "mode": 420,
+        "overwrite": true,
+        "contents": {
+          "source": "data:,${hostname}"
+        }
+      }
+    ]
+  },
+  "systemd": {
+    "units": [
+      {
+        "name": "qemu-guest-agent.service",
+        "enabled": true
+      }
+    ]
+  }
+}

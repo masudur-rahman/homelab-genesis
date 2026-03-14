@@ -24,6 +24,11 @@ output "all_ips" {
   ])
 }
 
+output "flatcar_nodes" {
+  description = "Information of provisioned Flatcar VMs"
+  value       = { for name, mod in module.vm_flatcar : name => mod.vm_info }
+}
+
 output "talos_clusters" {
   description = "Information of provisioned Talos clusters"
   value = {

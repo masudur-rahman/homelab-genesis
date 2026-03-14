@@ -108,9 +108,21 @@ variable "node_pools" {
   default = {}
 }
 
-# --- Flatcar VMs (Placeholder) ---
+# --- Flatcar VMs ---
 variable "flatcar_vms" {
-  type    = map(any)
+  description = "Flatcar Container Linux VMs to provision"
+  type = map(object({
+    desc     = string
+    pool     = optional(string)
+    vm_count = number
+    tags     = string
+    cpu      = number
+    memory   = number
+    disk     = number
+    ip_start = number
+    gateway  = optional(string)
+    cidr     = optional(string)
+  }))
   default = {}
 }
 
