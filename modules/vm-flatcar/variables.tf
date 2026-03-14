@@ -20,7 +20,7 @@ variable "vm_count" {
 
 variable "tags" {
   description = "Tags for the VMs"
-  type        = string
+  type        = list(string)
 }
 
 variable "cpu" {

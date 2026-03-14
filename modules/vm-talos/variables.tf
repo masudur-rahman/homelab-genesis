@@ -57,7 +57,7 @@ variable "control_plane" {
     cpu      = number
     memory   = number
     disk     = optional(number, 50)
-    tags     = string
+    tags     = list(string)
     ip_start = number
   })
 }
@@ -69,7 +69,7 @@ variable "worker_nodes" {
     cpu      = number
     memory   = number
     disk     = optional(number, 100)
-    tags     = string
+    tags     = list(string)
     ip_start = number
   })
 }

@@ -78,7 +78,7 @@ variable "debian_vms" {
     desc     = string
     pool     = optional(string)
     vm_count = number
-    tags     = string
+    tags     = list(string)
     cpu      = number
     memory   = number
     disk     = number
@@ -89,7 +89,6 @@ variable "debian_vms" {
   default = {}
 }
 
-
 # --- Flatcar VMs ---
 variable "flatcar_vms" {
   description = "Flatcar Container Linux VMs to provision"
@@ -97,7 +96,7 @@ variable "flatcar_vms" {
     desc     = string
     pool     = optional(string)
     vm_count = number
-    tags     = string
+    tags     = list(string)
     cpu      = number
     memory   = number
     disk     = number
@@ -123,7 +122,7 @@ variable "talos_clusters" {
       cpu      = number
       memory   = number
       disk     = optional(number, 50)
-      tags     = string
+      tags     = list(string)
       ip_start = number
     })
     worker_nodes = object({
@@ -131,7 +130,7 @@ variable "talos_clusters" {
       cpu      = number
       memory   = number
       disk     = optional(number, 100)
-      tags     = string
+      tags     = list(string)
       ip_start = number
     })
   }))

@@ -17,7 +17,7 @@ locals {
         cpu      = var.control_plane.cpu
         memory   = var.control_plane.memory
         disk     = var.control_plane.disk
-        tags     = concat([terraform.workspace, "talos"], split(",", var.control_plane.tags))
+        tags     = concat([terraform.workspace, "talos"], var.control_plane.tags)
         ip_start = var.control_plane.ip_start
         index    = i
       }
@@ -29,7 +29,7 @@ locals {
         cpu      = var.worker_nodes.cpu
         memory   = var.worker_nodes.memory
         disk     = var.worker_nodes.disk
-        tags     = concat([terraform.workspace, "talos"], split(",", var.worker_nodes.tags))
+        tags     = concat([terraform.workspace, "talos"], var.worker_nodes.tags)
         ip_start = var.worker_nodes.ip_start
         index    = i
       }

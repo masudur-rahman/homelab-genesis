@@ -5,7 +5,7 @@ terraform {
 }
 
 locals {
-  tags = concat([terraform.workspace], split(",", var.tags))
+  tags = concat([terraform.workspace], var.tags)
 
   network_gateway = var.pool_gateway != null ? var.pool_gateway : var.common_gateway
   ip_cidr         = var.pool_cidr != null ? var.pool_cidr : var.common_cidr

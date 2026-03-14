@@ -2,7 +2,10 @@ variable "proxmox_node" { type = string }
 variable "name" { type = string }
 variable "desc" { type = string }
 variable "vm_count" { type = number }
-variable "tags" { type = string }
+variable "tags" {
+  description = "Tags for the VMs"
+  type        = list(string)
+}
 variable "cpu" { type = number }
 variable "memory" { type = number }
 variable "disk" { type = number }
