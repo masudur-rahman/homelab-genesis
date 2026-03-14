@@ -68,6 +68,18 @@ variable "pool_id" {
   type        = string
 }
 
+variable "cpu_type" {
+  description = "CPU type for VMs"
+  type        = string
+  default     = "x86-64-v2-AES"
+}
+
+variable "balloon" {
+  description = "Minimum memory for balloon (null = provider default)"
+  type        = number
+  default     = null
+}
+
 variable "pool_gateway" {
   description = "Pool-specific gateway (overrides common)"
   type        = string

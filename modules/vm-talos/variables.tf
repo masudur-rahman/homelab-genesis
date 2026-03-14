@@ -38,6 +38,18 @@ variable "pool_id" {
   type        = string
 }
 
+variable "cpu_type" {
+  description = "CPU type for VMs (Talos requires host)"
+  type        = string
+  default     = "host"
+}
+
+variable "balloon" {
+  description = "Minimum memory for balloon (Talos requires 0 to disable)"
+  type        = number
+  default     = 0
+}
+
 variable "pool_gateway" {
   description = "Pool-specific gateway (overrides common)"
   type        = string

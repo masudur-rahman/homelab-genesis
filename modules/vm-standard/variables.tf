@@ -26,6 +26,18 @@ variable "vm_password" {
   sensitive   = true
 }
 
+variable "cpu_type" {
+  description = "CPU type for VMs"
+  type        = string
+  default     = "x86-64-v2-AES"
+}
+
+variable "balloon" {
+  description = "Minimum memory for balloon (null = provider default)"
+  type        = number
+  default     = null
+}
+
 variable "pool_gateway" {
   type    = string
   default = null

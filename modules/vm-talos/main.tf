@@ -58,13 +58,13 @@ resource "proxmox_virtual_environment_vm" "talos" {
 
   cpu {
     cores = each.value.cpu
-    type  = "host"
+    type  = var.cpu_type
     numa  = true
   }
 
   memory {
     dedicated = each.value.memory
-    floating  = 0
+    floating  = var.balloon
   }
 
   # Blank raw disk for Talos to install onto
