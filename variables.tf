@@ -89,24 +89,6 @@ variable "debian_vms" {
   default = {}
 }
 
-variable "node_pools" {
-  description = "Map of Node Pools"
-  type = map(object({
-    desc     = string
-    vm_count = number
-    tags     = string
-
-    cpu    = number
-    memory = number
-    disk   = number
-
-    ip_start = number # e.g. 50 starts at .50
-
-    gateway = optional(string)
-    cidr    = optional(string)
-  }))
-  default = {}
-}
 
 # --- Flatcar VMs ---
 variable "flatcar_vms" {
