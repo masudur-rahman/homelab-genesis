@@ -26,16 +26,28 @@ variable "tags" {
 variable "cpu" {
   description = "Number of CPU cores"
   type        = number
+  validation {
+    condition     = var.cpu >= 1
+    error_message = "CPU cores must be >= 1."
+  }
 }
 
 variable "memory" {
   description = "Memory in MB"
   type        = number
+  validation {
+    condition     = var.memory >= 512
+    error_message = "Memory must be >= 512 MB."
+  }
 }
 
 variable "disk" {
   description = "Disk size in GB"
   type        = number
+  validation {
+    condition     = var.disk >= 8
+    error_message = "Disk size must be >= 8 GB."
+  }
 }
 
 variable "ip_start" {

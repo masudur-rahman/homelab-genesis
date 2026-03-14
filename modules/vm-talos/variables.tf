@@ -72,6 +72,19 @@ variable "control_plane" {
     tags     = list(string)
     ip_start = number
   })
+
+  validation {
+    condition     = var.control_plane.cpu >= 1
+    error_message = "Control plane CPU cores must be >= 1."
+  }
+  validation {
+    condition     = var.control_plane.memory >= 512
+    error_message = "Control plane memory must be >= 512 MB."
+  }
+  validation {
+    condition     = var.control_plane.disk >= 8
+    error_message = "Control plane disk must be >= 8 GB."
+  }
 }
 
 variable "worker_nodes" {
@@ -84,4 +97,17 @@ variable "worker_nodes" {
     tags     = list(string)
     ip_start = number
   })
+
+  validation {
+    condition     = var.worker_nodes.cpu >= 1
+    error_message = "Worker node CPU cores must be >= 1."
+  }
+  validation {
+    condition     = var.worker_nodes.memory >= 512
+    error_message = "Worker node memory must be >= 512 MB."
+  }
+  validation {
+    condition     = var.worker_nodes.disk >= 8
+    error_message = "Worker node disk must be >= 8 GB."
+  }
 }

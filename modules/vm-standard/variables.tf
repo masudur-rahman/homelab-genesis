@@ -6,9 +6,30 @@ variable "tags" {
   description = "Tags for the VMs"
   type        = list(string)
 }
-variable "cpu" { type = number }
-variable "memory" { type = number }
-variable "disk" { type = number }
+variable "cpu" {
+  description = "Number of CPU cores"
+  type        = number
+  validation {
+    condition     = var.cpu >= 1
+    error_message = "CPU cores must be >= 1."
+  }
+}
+variable "memory" {
+  description = "Memory in MB"
+  type        = number
+  validation {
+    condition     = var.memory >= 512
+    error_message = "Memory must be >= 512 MB."
+  }
+}
+variable "disk" {
+  description = "Disk size in GB"
+  type        = number
+  validation {
+    condition     = var.disk >= 8
+    error_message = "Disk size must be >= 8 GB."
+  }
+}
 variable "ip_start" { type = number }
 variable "cloud_image_id" { type = string }
 variable "common_gateway" { type = string }
