@@ -2,7 +2,7 @@ locals {
   resource_pools = sort(distinct(compact(concat(
     [for k, v in var.debian_vms : v.pool],
     # [for k, v in var.flatcar_vms : v.pool],
-    # [for k, v in var.talos_clusters : v.pool],
+    [for k, v in var.talos_clusters : v.pool],
     [var.common_pool]
   ))))
 }
@@ -50,5 +50,25 @@ module "vm_standard" {
   pool_id = module.structure.pool_ids[coalesce(each.value.pool, var.common_pool)]
 }
 
+module "vm_talos" {
+  source   = "./modules/vm-talos"
+  for_each = var.talos_clusters
+
+  proxmox_node   = var.proxmox_node
+  common_gateway = var.common_gateway
+  common_cidr    = var.common_cidr
+  talos_iso_id   = module.bootstrap.talos_iso_ids[each.value.talos_version]
+
+  name        = each.key
+  desc        = each.value.desc
+  cluster_vip = each.value.cluster_vip
+
+  control_plane = each.value.control_plane
+  worker_nodes  = each.value.worker_nodes
+
+  pool_gateway = each.value.gateway
+  pool_cidr    = each.value.cidr
+  pool_id      = module.structure.pool_ids[coalesce(each.value.pool, var.common_pool)]
+}
+
 # Future: module "vm_flatcar" { ... }
-# Future: module "vm_talos" { ... }

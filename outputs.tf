@@ -23,3 +23,14 @@ output "all_ips" {
     for pool in module.vm_standard : values(pool.vm_info)
   ])
 }
+
+output "talos_clusters" {
+  description = "Information of provisioned Talos clusters"
+  value = {
+    for name, cluster in module.vm_talos : name => {
+      vms               = cluster.vm_info
+      control_plane_ips = cluster.control_plane_ips
+      worker_ips        = cluster.worker_ips
+    }
+  }
+}

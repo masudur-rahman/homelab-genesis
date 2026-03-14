@@ -114,8 +114,32 @@ variable "flatcar_vms" {
   default = {}
 }
 
-# --- Talos Clusters (Placeholder) ---
+# --- Talos Clusters ---
 variable "talos_clusters" {
-  type    = map(any)
+  description = "Talos K8s clusters to provision"
+  type = map(object({
+    desc          = string
+    talos_version = optional(string, "v1.12.2")
+    cluster_vip   = string
+    pool          = optional(string)
+    gateway       = optional(string)
+    cidr          = optional(string)
+    control_plane = object({
+      count    = number
+      cpu      = number
+      memory   = number
+      disk     = optional(number, 50)
+      tags     = string
+      ip_start = number
+    })
+    worker_nodes = object({
+      count    = number
+      cpu      = number
+      memory   = number
+      disk     = optional(number, 100)
+      tags     = string
+      ip_start = number
+    })
+  }))
   default = {}
 }
