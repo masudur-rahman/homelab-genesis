@@ -1,0 +1,32 @@
+machine:
+  network:
+    hostname: ${hostname}
+    nameservers:
+%{ for ns in nameservers ~}
+      - ${ns}
+%{ endfor ~}
+    interfaces:
+      - interface: eth0
+        addresses:
+          - ${ip}/24
+        routes:
+          - network: 0.0.0.0/0
+            gateway: ${gateway}
+  install:
+    disk: /dev/sda
+  nodeLabels:
+    topology.kubernetes.io/region: ${region}
+    topology.kubernetes.io/zone: ${zone}
+%{ for k, v in node_labels ~}
+    ${k}: ${v}
+%{ endfor ~}
+%{ if length(node_taints) > 0 ~}
+  kubelet:
+    extraConfig:
+      registerWithTaints:
+%{ for taint in node_taints ~}
+        - key: ${taint.key}
+          value: ${taint.value}
+          effect: ${taint.effect}
+%{ endfor ~}
+%{ endif ~}

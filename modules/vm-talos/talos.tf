@@ -10,6 +10,56 @@ data "talos_client_configuration" "this" {
   endpoints            = [for _, node in local.cp_nodes : node.ip]
 }
 
+# Inline manifests: Cilium + Proxmox CSI rendered Helm charts
+locals {
+  inline_manifests = [
+    {
+      name     = "cilium"
+      contents = data.helm_template.cilium.manifest
+    },
+    {
+      name     = "proxmox-csi"
+      contents = data.helm_template.proxmox_csi.manifest
+    },
+  ]
+
+  # CP-only: VIP on interface
+  cp_vip_patch = {
+    for name, node in local.cp_nodes : name => jsonencode({
+      machine = {
+        network = {
+          interfaces = [{
+            interface = "eth0"
+            vip = {
+              ip = var.cluster_vip
+            }
+          }]
+        }
+      }
+    })
+  }
+
+  # CP-only: cluster overrides (single value, not per-node)
+  cp_cluster_patch = jsonencode({
+    cluster = {
+      network = {
+        cni = {
+          name = "none"
+        }
+      }
+      proxy = {
+        disabled = true
+      }
+      inlineManifests = local.inline_manifests
+      extraManifests = [
+        "https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/main/deploy/standalone-install.yaml",
+        "https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml",
+      ]
+    }
+  })
+
+}
+
 # Control plane machine configuration
 data "talos_machine_configuration" "cp" {
   for_each = local.cp_nodes
@@ -21,54 +71,25 @@ data "talos_machine_configuration" "cp" {
   talos_version      = var.talos_version
   kubernetes_version = var.kubernetes_version
 
-  config_patches = [
-    # Network: static IP + gateway + nameservers
-    jsonencode({
-      machine = {
-        network = {
-          hostname    = each.key
-          nameservers = var.nameservers
-          interfaces = [{
-            interface = "eth0"
-            addresses = ["${each.value.ip}/24"]
-            routes = [{
-              network = "0.0.0.0/0"
-              gateway = local.network_gateway
-            }]
-            vip = {
-              ip = var.cluster_vip
-            }
-          }]
-        }
-        install = {
-          disk = "/dev/sda"
-        }
-        nodeLabels = {
-          "topology.kubernetes.io/region" = var.topology_region
-          "topology.kubernetes.io/zone"   = var.topology_zone
-        }
-      }
+  config_patches = compact([
+    templatefile("${path.module}/templates/machine-config.yaml.tftpl", {
+      hostname    = each.key
+      ip          = each.value.ip
+      gateway     = local.network_gateway
+      nameservers = var.nameservers
+      region      = var.topology_region
+      zone        = var.topology_zone
+      node_labels = each.value.node_labels
+      node_taints = each.value.node_taints
     }),
-
-    # Cluster: disable default CNI and kube-proxy (Cilium replaces both)
-    jsonencode({
-      cluster = {
-        network = {
-          cni = {
-            name = "none"
-          }
-        }
-        proxy = {
-          disabled = true
-        }
-        inlineManifests = local.inline_manifests
-        extraManifests = [
-          "https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/main/deploy/standalone-install.yaml",
-          "https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml",
-        ]
-      }
-    }),
-  ]
+    local.cp_vip_patch[each.key],
+    local.cp_cluster_patch,
+    each.value.ephemeral_volume_grow ? templatefile("${path.module}/templates/ephemeral-volume.yaml.tftpl", {
+      grow     = each.value.ephemeral_volume_grow
+      max_size = each.value.ephemeral_volume_max_size
+      min_size = each.value.ephemeral_volume_min_size
+    }) : "",
+  ])
 }
 
 # Worker machine configuration
@@ -82,46 +103,23 @@ data "talos_machine_configuration" "wk" {
   talos_version      = var.talos_version
   kubernetes_version = var.kubernetes_version
 
-  config_patches = [
-    # Network: static IP + gateway + nameservers (no VIP on workers)
-    jsonencode({
-      machine = {
-        network = {
-          hostname    = each.key
-          nameservers = var.nameservers
-          interfaces = [{
-            interface = "eth0"
-            addresses = ["${each.value.ip}/24"]
-            routes = [{
-              network = "0.0.0.0/0"
-              gateway = local.network_gateway
-            }]
-          }]
-        }
-        install = {
-          disk = "/dev/sda"
-        }
-        nodeLabels = {
-          "topology.kubernetes.io/region" = var.topology_region
-          "topology.kubernetes.io/zone"   = var.topology_zone
-        }
-      }
+  config_patches = compact([
+    templatefile("${path.module}/templates/machine-config.yaml.tftpl", {
+      hostname    = each.key
+      ip          = each.value.ip
+      gateway     = local.network_gateway
+      nameservers = var.nameservers
+      region      = var.topology_region
+      zone        = var.topology_zone
+      node_labels = each.value.node_labels
+      node_taints = each.value.node_taints
     }),
-  ]
-}
-
-# Inline manifests: Cilium + Proxmox CSI rendered Helm charts
-locals {
-  inline_manifests = [
-    {
-      name     = "cilium"
-      contents = data.helm_template.cilium.manifest
-    },
-    {
-      name     = "proxmox-csi"
-      contents = data.helm_template.proxmox_csi.manifest
-    },
-  ]
+    each.value.ephemeral_volume_grow ? templatefile("${path.module}/templates/ephemeral-volume.yaml.tftpl", {
+      grow     = each.value.ephemeral_volume_grow
+      max_size = each.value.ephemeral_volume_max_size
+      min_size = each.value.ephemeral_volume_min_size
+    }) : "",
+  ])
 }
 
 # Apply machine configuration to all nodes
