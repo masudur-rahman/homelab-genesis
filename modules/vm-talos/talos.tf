@@ -138,7 +138,7 @@ resource "talos_machine_configuration_apply" "this" {
 # Bootstrap the first control plane node
 resource "talos_machine_bootstrap" "this" {
   client_configuration = talos_machine_secrets.this.client_configuration
-  node                 = local.all_nodes["${var.name}-cp-01"].ip
+  node                 = local.all_nodes[local.first_cp_name].ip
 
   depends_on = [talos_machine_configuration_apply.this]
 }
@@ -146,7 +146,7 @@ resource "talos_machine_bootstrap" "this" {
 # Retrieve admin kubeconfig
 resource "talos_cluster_kubeconfig" "this" {
   client_configuration = talos_machine_secrets.this.client_configuration
-  node                 = local.all_nodes["${var.name}-cp-01"].ip
+  node                 = local.all_nodes[local.first_cp_name].ip
 
   depends_on = [talos_machine_bootstrap.this]
 }
