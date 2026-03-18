@@ -1,0 +1,45 @@
+ipam:
+  mode: kubernetes
+
+kubeProxyReplacement: true
+
+cgroup:
+  autoMount:
+    enabled: false
+  hostRoot: /sys/fs/cgroup
+
+securityContext:
+  capabilities:
+    ciliumAgent:
+      - CHOWN
+      - KILL
+      - NET_ADMIN
+      - NET_RAW
+      - IPC_LOCK
+      - SYS_ADMIN
+      - SYS_RESOURCE
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+    cleanCiliumState:
+      - NET_ADMIN
+      - SYS_ADMIN
+      - SYS_RESOURCE
+
+tls:
+  ca:
+    cert: "${cilium_ca_cert}"
+    key: "${cilium_ca_key}"
+
+hubble:
+  enabled: true
+  relay:
+    enabled: true
+  tls:
+    enabled: true
+    server:
+      cert: "${hubble_tls_cert}"
+      key: "${hubble_tls_key}"
+  ui:
+    enabled: true

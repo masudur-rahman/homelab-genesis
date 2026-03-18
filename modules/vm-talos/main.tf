@@ -1,6 +1,9 @@
 terraform {
   required_providers {
     proxmox = { source = "bpg/proxmox" }
+    talos   = { source = "siderolabs/talos" }
+    tls     = { source = "hashicorp/tls" }
+    helm    = { source = "hashicorp/helm" }
   }
 }
 
@@ -20,6 +23,7 @@ locals {
         tags     = concat([terraform.workspace, "talos"], var.control_plane.tags)
         ip_start = var.control_plane.ip_start
         index    = i
+        ip       = cidrhost(local.ip_cidr, var.control_plane.ip_start + i)
       }
     },
     {
@@ -32,9 +36,14 @@ locals {
         tags     = concat([terraform.workspace, "talos"], var.worker_nodes.tags)
         ip_start = var.worker_nodes.ip_start
         index    = i
+        ip       = cidrhost(local.ip_cidr, var.worker_nodes.ip_start + i)
       }
     }
   )
+
+  cluster_endpoint = "https://${var.cluster_vip}:${var.cluster_endpoint_port}"
+  cp_nodes         = { for k, v in local.all_nodes : k => v if v.role == "cp" }
+  wk_nodes         = { for k, v in local.all_nodes : k => v if v.role == "wk" }
 }
 
 resource "proxmox_virtual_environment_vm" "talos" {

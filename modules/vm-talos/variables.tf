@@ -111,3 +111,58 @@ variable "worker_nodes" {
     error_message = "Worker node disk must be >= 8 GB."
   }
 }
+
+# --- Talos Cluster Lifecycle ---
+
+variable "talos_version" {
+  description = "Talos OS version"
+  type        = string
+  default     = "v1.12.2"
+}
+
+variable "kubernetes_version" {
+  description = "Kubernetes version to deploy"
+  type        = string
+  default     = "1.32.3"
+}
+
+variable "nameservers" {
+  description = "DNS nameservers for nodes"
+  type        = list(string)
+  default     = ["1.1.1.1", "8.8.8.8"]
+}
+
+variable "cluster_endpoint_port" {
+  description = "Kubernetes API server port"
+  type        = number
+  default     = 6443
+}
+
+variable "cilium_version" {
+  description = "Cilium Helm chart version"
+  type        = string
+  default     = "1.17.3"
+}
+
+variable "proxmox_csi_version" {
+  description = "Proxmox CSI plugin Helm chart version"
+  type        = string
+  default     = "0.10.1"
+}
+
+variable "pm_api_endpoint" {
+  description = "Proxmox API URL for CSI configuration"
+  type        = string
+}
+
+variable "topology_region" {
+  description = "Topology region label for CSI"
+  type        = string
+  default     = "homelab"
+}
+
+variable "topology_zone" {
+  description = "Topology zone label for CSI"
+  type        = string
+  default     = "pve"
+}

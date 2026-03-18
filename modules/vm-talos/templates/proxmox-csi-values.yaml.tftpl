@@ -1,0 +1,17 @@
+storageClass:
+  - name: proxmox-zfs
+    storage: local-zfs
+    reclaimPolicy: Delete
+    fstype: ext4
+
+config:
+  clusters:
+    - url: "${pm_api_endpoint}"
+      insecure: true
+      token_id: "${token_id}"
+      token_secret: "${token_secret}"
+      region: "${region}"
+
+node:
+  nodeSelector:
+    topology.kubernetes.io/zone: "${zone}"

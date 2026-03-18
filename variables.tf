@@ -111,12 +111,13 @@ variable "flatcar_vms" {
 variable "talos_clusters" {
   description = "Talos K8s clusters to provision"
   type = map(object({
-    desc          = string
-    talos_version = optional(string, "v1.12.2")
-    cluster_vip   = string
-    pool          = optional(string)
-    gateway       = optional(string)
-    cidr          = optional(string)
+    desc               = string
+    talos_version      = optional(string, "v1.12.2")
+    kubernetes_version = optional(string, "1.32.3")
+    cluster_vip        = string
+    pool               = optional(string)
+    gateway            = optional(string)
+    cidr               = optional(string)
     control_plane = object({
       count    = number
       cpu      = number

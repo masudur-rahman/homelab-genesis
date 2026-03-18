@@ -66,6 +66,10 @@ module "vm_talos" {
   control_plane = each.value.control_plane
   worker_nodes  = each.value.worker_nodes
 
+  talos_version      = each.value.talos_version
+  kubernetes_version = each.value.kubernetes_version
+  pm_api_endpoint    = var.pm_api_endpoint
+
   pool_gateway = each.value.gateway
   pool_cidr    = each.value.cidr
   pool_id      = module.structure.pool_ids[coalesce(each.value.pool, var.common_pool)]
