@@ -133,10 +133,6 @@ resource "talos_machine_configuration_apply" "this" {
   node                        = each.value.ip
 
   depends_on = [proxmox_virtual_environment_vm.talos]
-
-  timeouts {
-    create = "10m"
-  }
 }
 
 # Bootstrap the first control plane node
@@ -163,8 +159,4 @@ data "talos_cluster_health" "this" {
   worker_nodes         = [for _, node in local.wk_nodes : node.ip]
 
   depends_on = [talos_machine_bootstrap.this]
-
-  timeouts {
-    read = "10m"
-  }
 }
