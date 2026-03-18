@@ -65,12 +65,18 @@ variable "pool_cidr" {
 variable "control_plane" {
   description = "Control plane node configuration"
   type = object({
-    count    = number
-    cpu      = number
-    memory   = number
-    disk     = optional(number, 50)
-    tags     = list(string)
-    ip_start = number
+    count                     = number
+    cpu                       = number
+    memory                    = number
+    disk                      = optional(number, 50)
+    tags                      = list(string)
+    ip_start                  = number
+    prefix                    = optional(string)
+    node_labels               = optional(map(string), {})
+    node_taints               = optional(map(string), {})
+    ephemeral_volume_grow     = optional(bool, false)
+    ephemeral_volume_max_size = optional(string, "")
+    ephemeral_volume_min_size = optional(string, "")
   })
 
   validation {
@@ -94,12 +100,18 @@ variable "control_plane" {
 variable "worker_nodes" {
   description = "Worker node configuration"
   type = object({
-    count    = number
-    cpu      = number
-    memory   = number
-    disk     = optional(number, 100)
-    tags     = list(string)
-    ip_start = number
+    count                     = number
+    cpu                       = number
+    memory                    = number
+    disk                      = optional(number, 100)
+    tags                      = list(string)
+    ip_start                  = number
+    prefix                    = optional(string)
+    node_labels               = optional(map(string), {})
+    node_taints               = optional(map(string), {})
+    ephemeral_volume_grow     = optional(bool, false)
+    ephemeral_volume_max_size = optional(string, "")
+    ephemeral_volume_min_size = optional(string, "")
   })
 
   validation {
