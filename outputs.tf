@@ -36,6 +36,19 @@ output "talos_clusters" {
       vms               = cluster.vm_info
       control_plane_ips = cluster.control_plane_ips
       worker_ips        = cluster.worker_ips
+      cluster_endpoint  = cluster.cluster_endpoint
     }
   }
+}
+
+output "talos_kubeconfigs" {
+  description = "Kubeconfig YAML per Talos cluster"
+  value       = { for name, cluster in module.vm_talos : name => cluster.kubeconfig }
+  sensitive   = true
+}
+
+output "talos_talosconfigs" {
+  description = "Talosconfig YAML per Talos cluster"
+  value       = { for name, cluster in module.vm_talos : name => cluster.talosconfig }
+  sensitive   = true
 }

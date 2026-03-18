@@ -123,3 +123,48 @@ locals {
     },
   ]
 }
+
+# Apply machine configuration to all nodes
+resource "talos_machine_configuration_apply" "this" {
+  for_each = local.all_nodes
+
+  client_configuration        = talos_machine_secrets.this.client_configuration
+  machine_configuration_input = each.value.role == "cp" ? data.talos_machine_configuration.cp[each.key].machine_configuration : data.talos_machine_configuration.wk[each.key].machine_configuration
+  node                        = each.value.ip
+
+  depends_on = [proxmox_virtual_environment_vm.talos]
+
+  timeouts {
+    create = "10m"
+  }
+}
+
+# Bootstrap the first control plane node
+resource "talos_machine_bootstrap" "this" {
+  client_configuration = talos_machine_secrets.this.client_configuration
+  node                 = local.all_nodes["${var.name}-cp-01"].ip
+
+  depends_on = [talos_machine_configuration_apply.this]
+}
+
+# Retrieve admin kubeconfig
+resource "talos_cluster_kubeconfig" "this" {
+  client_configuration = talos_machine_secrets.this.client_configuration
+  node                 = local.all_nodes["${var.name}-cp-01"].ip
+
+  depends_on = [talos_machine_bootstrap.this]
+}
+
+# Wait for cluster health
+data "talos_cluster_health" "this" {
+  client_configuration = talos_machine_secrets.this.client_configuration
+  endpoints            = [for _, node in local.cp_nodes : node.ip]
+  control_plane_nodes  = [for _, node in local.cp_nodes : node.ip]
+  worker_nodes         = [for _, node in local.wk_nodes : node.ip]
+
+  depends_on = [talos_machine_bootstrap.this]
+
+  timeouts {
+    read = "10m"
+  }
+}

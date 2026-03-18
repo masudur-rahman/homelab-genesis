@@ -74,6 +74,10 @@ variable "control_plane" {
   })
 
   validation {
+    condition     = var.control_plane.count >= 1
+    error_message = "At least one control plane node is required."
+  }
+  validation {
     condition     = var.control_plane.cpu >= 1
     error_message = "Control plane CPU cores must be >= 1."
   }

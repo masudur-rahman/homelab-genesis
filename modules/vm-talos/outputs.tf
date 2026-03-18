@@ -23,3 +23,20 @@ output "worker_ips" {
     if cfg.role == "wk"
   ]
 }
+
+output "talosconfig" {
+  description = "Talos client configuration YAML"
+  value       = data.talos_client_configuration.this.talos_config
+  sensitive   = true
+}
+
+output "kubeconfig" {
+  description = "Kubernetes admin kubeconfig YAML"
+  value       = talos_cluster_kubeconfig.this.kubeconfig_raw
+  sensitive   = true
+}
+
+output "cluster_endpoint" {
+  description = "Kubernetes API endpoint URL"
+  value       = local.cluster_endpoint
+}
