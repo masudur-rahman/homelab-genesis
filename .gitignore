@@ -19,6 +19,10 @@ vars/secrets.json
 # Crash log files
 crash.log
 
+# Extracted kubeconfigs and secrets
+files/kubeconfigs/
+files/secrets/
+
 # Mac junk
 .DS_Store
 .idea

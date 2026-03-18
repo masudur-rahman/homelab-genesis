@@ -10,7 +10,9 @@ SECRETS_JSON := vars/secrets.json
 ENV_VAR_FILES := $(wildcard vars/$(ENV)/*.tfvars)
 TF_VAR_ARGS := -var-file="$(COMMON_VARS)" -var-file="$(SECRETS_FILE)" $(foreach file,$(ENV_VAR_FILES),-var-file="$(file)")
 
-.PHONY: init plan apply destroy workspace fmt validate output init_reconfigure decrypt encrypt
+CLUSTER ?= homelab-k8s
+
+.PHONY: init plan apply destroy workspace fmt validate output init_reconfigure decrypt encrypt kubeconfig talosconfig
 
 init:
 	@mkdir -p states
@@ -72,3 +74,13 @@ validate:
 
 output: workspace
 	terraform output
+
+kubeconfig: workspace
+	@mkdir -p files/kubeconfigs
+	@terraform output -raw talos_kubeconfigs | jq -r '.["$(CLUSTER)"]' > files/kubeconfigs/$(CLUSTER).yaml
+	@echo "Kubeconfig → files/kubeconfigs/$(CLUSTER).yaml"
+
+talosconfig: workspace
+	@mkdir -p files/secrets
+	@terraform output -raw talos_talosconfigs | jq -r '.["$(CLUSTER)"]' > files/secrets/$(CLUSTER)_talosconfig.yaml
+	@echo "Talosconfig → files/secrets/$(CLUSTER)_talosconfig.yaml"
