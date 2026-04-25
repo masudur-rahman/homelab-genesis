@@ -37,6 +37,12 @@ variable "ssh_public_keys" {
 }
 
 
+variable "nameservers" {
+  description = "DNS nameservers for VMs"
+  type        = list(string)
+  default     = ["1.1.1.1", "8.8.8.8"]
+}
+
 variable "common_pool" {
   description = "Default pool for VMs if not specified"
   type        = string

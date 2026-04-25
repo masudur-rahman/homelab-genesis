@@ -54,10 +54,11 @@ module "vm_talos" {
   source   = "./modules/vm-talos"
   for_each = var.talos_clusters
 
-  proxmox_node   = var.proxmox_node
-  common_gateway = var.common_gateway
-  common_cidr    = var.common_cidr
-  talos_iso_id   = module.bootstrap.talos_iso_ids[each.value.talos_version]
+  proxmox_node        = var.proxmox_node
+  common_gateway      = var.common_gateway
+  common_cidr         = var.common_cidr
+  talos_iso_id        = module.bootstrap.talos_iso_ids[each.value.talos_version]
+  talos_install_image = module.bootstrap.talos_installer_images[each.value.talos_version]
 
   name        = each.key
   desc        = each.value.desc
@@ -69,6 +70,7 @@ module "vm_talos" {
   talos_version      = each.value.talos_version
   kubernetes_version = each.value.kubernetes_version
   pm_api_endpoint    = var.pm_api_endpoint
+  nameservers        = var.nameservers
 
   pool_gateway = each.value.gateway
   pool_cidr    = each.value.cidr

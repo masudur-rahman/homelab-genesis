@@ -19,7 +19,7 @@ variable "cluster_vip" {
 }
 
 variable "talos_iso_id" {
-  description = "Proxmox file ID for the Talos ISO"
+  description = "Proxmox file ID for the Talos nocloud ISO"
   type        = string
 }
 
@@ -138,6 +138,11 @@ variable "worker_nodes" {
 
 # --- Talos Cluster Lifecycle ---
 
+variable "talos_install_image" {
+  description = "Talos Image Factory installer image reference (nocloud platform)"
+  type        = string
+}
+
 variable "talos_version" {
   description = "Talos OS version"
   type        = string
@@ -171,7 +176,7 @@ variable "cilium_version" {
 variable "proxmox_csi_version" {
   description = "Proxmox CSI plugin Helm chart version"
   type        = string
-  default     = "0.10.1"
+  default     = "0.5.5"
 }
 
 variable "pm_api_endpoint" {

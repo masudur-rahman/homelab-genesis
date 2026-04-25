@@ -44,3 +44,12 @@ make validate          # validate syntax
 ## Active Context
 
 ## Learned
+- [state]: Use `terraform state rm -state=states/terraform.tfstate.d/{env}/terraform.tfstate {address}` if workspace selection fails to resolve state paths.
+- [auth]: Proxmox provider requires SSH identities loaded in `ssh-agent` for authentication (`ssh-add <key_path>`).
+- [talos]: First VirtIO network interface on Proxmox VMs (Talos v1.12) is `ens18`, not `eth0` or `enp0s1`.
+- [talos]: Must use Image Factory nocloud installer image (`machine.install.image`) — generic installer creates `metal` boot assets, breaking NoCloud hostname/platform detection after install to disk.
+- [talos]: Hostname on NoCloud comes from SMBIOS serial (`smbios { serial = "ds=nocloud;h=<name>" }`). Meta-data `local-hostname`/`hostname` fields are ignored in practice. `machine.network.hostname` in config is rejected on NoCloud platform.
+- [cilium]: Talos 1.9+ requires specific Cilium Helm values (disabling `cgroup.autoMount`) and privileged `securityContext`.
+- [cilium]: With `kubeProxyReplacement: true`, Cilium needs `k8sServiceHost`/`k8sServicePort` pointing to the cluster VIP to avoid bootstrap deadlock (can't reach ClusterIP `10.96.0.1` without CNI).
+- [talos]: CSI inline manifests need an explicit Namespace resource before the Helm-rendered resources (`create_namespace` in `helm_template` only renders template, doesn't create at apply time).
+- [talos]: kubelet needs `serverTLSBootstrap: true` in `machine.kubelet.extraConfig` for proper serving certs with IP SANs (required by metrics-server).

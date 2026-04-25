@@ -45,7 +45,7 @@ data "talos_image_factory_urls" "this" {
 
   talos_version = each.value.version
   schematic_id  = talos_image_factory_schematic.this[each.key].id
-  platform      = "metal"
+  platform      = "nocloud"
 }
 
 resource "proxmox_virtual_environment_download_file" "talos_iso" {

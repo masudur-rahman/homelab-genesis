@@ -33,10 +33,9 @@ output "talos_clusters" {
   description = "Information of provisioned Talos clusters"
   value = {
     for name, cluster in module.vm_talos : name => {
-      vms               = cluster.vm_info
-      control_plane_ips = cluster.control_plane_ips
-      worker_ips        = cluster.worker_ips
-      cluster_endpoint  = cluster.cluster_endpoint
+      vms           = cluster.vm_ids
+      node_ips      = cluster.node_ips
+      health_status = cluster.health_status
     }
   }
 }

@@ -18,6 +18,16 @@ locals {
       contents = data.helm_template.cilium.manifest
     },
     {
+      name = "csi-proxmox-namespace"
+      contents = yamlencode({
+        apiVersion = "v1"
+        kind       = "Namespace"
+        metadata = {
+          name = "csi-proxmox"
+        }
+      })
+    },
+    {
       name     = "proxmox-csi"
       contents = data.helm_template.proxmox_csi.manifest
     },
@@ -29,7 +39,7 @@ locals {
       machine = {
         network = {
           interfaces = [{
-            interface = "eth0"
+            interface = "ens18"
             vip = {
               ip = var.cluster_vip
             }
@@ -73,14 +83,14 @@ data "talos_machine_configuration" "cp" {
 
   config_patches = compact([
     templatefile("${path.module}/templates/machine-config.yaml.tftpl", {
-      hostname    = each.key
-      ip          = each.value.ip
-      gateway     = local.network_gateway
-      nameservers = var.nameservers
-      region      = var.topology_region
-      zone        = var.topology_zone
-      node_labels = each.value.node_labels
-      node_taints = each.value.node_taints
+      ip            = each.value.ip
+      gateway       = local.network_gateway
+      nameservers   = var.nameservers
+      region        = var.topology_region
+      zone          = var.topology_zone
+      node_labels   = each.value.node_labels
+      node_taints   = each.value.node_taints
+      install_image = var.talos_install_image
     }),
     local.cp_vip_patch[each.key],
     local.cp_cluster_patch,
@@ -90,6 +100,11 @@ data "talos_machine_configuration" "cp" {
       min_size = each.value.ephemeral_volume_min_size
     }) : "",
   ])
+
+  depends_on = [
+    data.helm_template.cilium,
+    data.helm_template.proxmox_csi,
+  ]
 }
 
 # Worker machine configuration
@@ -105,14 +120,14 @@ data "talos_machine_configuration" "wk" {
 
   config_patches = compact([
     templatefile("${path.module}/templates/machine-config.yaml.tftpl", {
-      hostname    = each.key
-      ip          = each.value.ip
-      gateway     = local.network_gateway
-      nameservers = var.nameservers
-      region      = var.topology_region
-      zone        = var.topology_zone
-      node_labels = each.value.node_labels
-      node_taints = each.value.node_taints
+      ip            = each.value.ip
+      gateway       = local.network_gateway
+      nameservers   = var.nameservers
+      region        = var.topology_region
+      zone          = var.topology_zone
+      node_labels   = each.value.node_labels
+      node_taints   = each.value.node_taints
+      install_image = var.talos_install_image
     }),
     each.value.ephemeral_volume_grow ? templatefile("${path.module}/templates/ephemeral-volume.yaml.tftpl", {
       grow     = each.value.ephemeral_volume_grow
@@ -130,7 +145,11 @@ resource "talos_machine_configuration_apply" "this" {
   machine_configuration_input = each.value.role == "cp" ? data.talos_machine_configuration.cp[each.key].machine_configuration : data.talos_machine_configuration.wk[each.key].machine_configuration
   node                        = each.value.ip
 
-  depends_on = [proxmox_virtual_environment_vm.talos]
+  depends_on = [
+    proxmox_virtual_environment_vm.talos,
+    data.talos_machine_configuration.cp,
+    data.talos_machine_configuration.wk,
+  ]
 }
 
 # Bootstrap the first control plane node
@@ -147,6 +166,19 @@ resource "talos_cluster_kubeconfig" "this" {
   node                 = local.all_nodes[local.first_cp_name].ip
 
   depends_on = [talos_machine_bootstrap.this]
+}
+
+
+resource "local_file" "kubeconfig" {
+  content         = talos_cluster_kubeconfig.this.kubeconfig_raw
+  filename        = "${path.root}/files/secrets/${var.name}_kubeconfig.yaml"
+  file_permission = "0600"
+}
+
+resource "local_file" "talosconfig" {
+  content         = data.talos_client_configuration.this.talos_config
+  filename        = "${path.root}/files/secrets/${var.name}_talosconfig.yaml"
+  file_permission = "0600"
 }
 
 # Wait for cluster health

@@ -53,4 +53,6 @@ data "helm_template" "proxmox_csi" {
       zone            = var.topology_zone
     })
   ]
+
+  depends_on = [proxmox_virtual_environment_acl.csi]
 }

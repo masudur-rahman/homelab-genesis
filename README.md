@@ -17,10 +17,12 @@ Terraform IaC for provisioning and managing Proxmox VMs in a homelab environment
 
 - **Virtualization:** Proxmox VE 8.x (HP EliteBook, 32GB RAM)
 - **IaC:** Terraform >= 1.6.0
-- **Provider:** [bpg/proxmox](https://registry.terraform.io/providers/bpg/proxmox/latest) ~> 0.93.0
+- **Providers:**
+  - [bpg/proxmox](https://registry.terraform.io/providers/bpg/proxmox/latest) ~> 0.93.0
+  - [siderolabs/talos](https://registry.terraform.io/providers/siderolabs/talos/latest) 0.10.1
 - **VM Types:**
   - Debian 12 (Cloud-Init) — gateways, app servers
-  - Talos OS (Image Factory) — Kubernetes cluster (planned)
+  - Talos OS (Image Factory) — Kubernetes cluster
   - Flatcar Container Linux — lightweight containers (planned)
 
 ---
@@ -65,8 +67,44 @@ Terraform workspaces separate environments:
 
 | Workspace | Purpose | VMs |
 |-----------|---------|-----|
-| `infra` | Network infrastructure | Gateway/VPN (2x Debian, 1GB/1vCPU) |
-| `compute` | Application workloads | Portal (2GB/2vCPU), Data (8GB/4vCPU), Expense-tracker (2GB/2vCPU) |
+| `infra`   | Network infrastructure | 2x Gateway/VPN (Debian) |
+| `compute` | Application workloads  | Debian app VMs + Talos K8s cluster(s) + Flatcar (planned) |
+
+---
+
+## Network / IP Allocation (10.66.0.0/24)
+
+The entire homelab lives on a single flat `/24`. IPs are carved into fixed
+blocks by service type so ranges never collide as things grow. This is the
+authoritative reference for IP planning.
+
+| Range            | Size | Purpose                                | Notes                                           |
+|------------------|------|----------------------------------------|-------------------------------------------------|
+| `.1`             | 1    | Router (fixed)                         |                                                 |
+| `.2`–`.4`        | 3    | Reserved — network gear                |                                                 |
+| `.5`–`.9`        | 5    | VPN / gateway VMs                      | `infra` workspace (currently `.5`, `.6`)        |
+| `.10`            | 1    | Proxmox host (fixed)                   |                                                 |
+| `.11`–`.19`      | 9    | Reserved — infra growth                |                                                 |
+| `.20`–`.29`      | 10   | Debian — data / storage tier           | `data-01 = .20`                                 |
+| `.30`–`.39`      | 10   | Debian — application servers           | `expense-tracker-01 = .30`                      |
+| `.40`–`.49`      | 10   | Debian — monitoring / observability    | `monitoring-01 = .40`                           |
+| `.50`            | 1    | Ingress VIP (reserved for HA)          |                                                 |
+| `.51`–`.59`      | 9    | Debian — edge / ingress VMs            | `portal-01 = .51`                               |
+| `.60`–`.79`      | 20   | Talos cluster #1 (`olympus`)           | `.60` VIP · `.61`–`.69` CPs · `.70`–`.79` wkrs  |
+| `.80`–`.99`      | 20   | Talos cluster #2 (future)              | same per-block layout                           |
+| `.100`–`.119`    | 20   | Talos cluster #3 (future)              | same per-block layout                           |
+| `.120`–`.129`    | 10   | Flatcar / container VMs                |                                                 |
+| `.130`–`.149`    | 20   | Reserved floating                      | CSI floating, extra VM types, misc              |
+| `.150`–`.169`    | 20   | K8s LoadBalancer — fixed pool          | DNS-pinned services                             |
+| `.170`–`.179`    | 10   | K8s LoadBalancer — dynamic pool        | auto-assigned                                   |
+| `.180`–`.229`    | 50   | Router DHCP (regular + guest network)  |                                                 |
+| `.230`–`.249`    | 20   | Reserved — expansion                   |                                                 |
+| `.250`–`.252`    | 3    | Reserved                               |                                                 |
+| `.253`           | 1    | AdGuard DNS (fixed)                    |                                                 |
+| `.254`           | 1    | Reserved                               |                                                 |
+
+**Talos per-cluster block layout** (20 IPs each): first IP is the cluster VIP,
+next 9 for control-plane nodes (max 5 used in practice), next 10 for workers.
 
 ---
 
@@ -127,17 +165,19 @@ make output ENV=x      # show outputs
 
 ## Current Status
 
-### Implemented (5 VMs)
-- 2x Gateway/VPN (Debian, 1GB RAM, 1 vCPU, 8GB disk) — `infra` workspace
-- 1x Portal (Debian, 2GB RAM, 2 vCPU, 32GB disk) — `compute` workspace
-- 1x Data (Debian, 8GB RAM, 4 vCPU, 100GB disk) — `compute` workspace
-- 1x Expense-tracker (Debian, 2GB RAM, 2 vCPU, 20GB disk) — `compute` workspace
+### Implemented — `infra` workspace
+- 2x Gateway/VPN (Debian, 1GB RAM, 1 vCPU, 8GB disk)
+
+### Implemented — `compute` workspace
+- 1x Portal          (Debian, 2GB RAM, 2 vCPU, 32GB disk)  — ingress/proxy
+- 1x Data            (Debian, 8GB RAM, 4 vCPU, 100GB disk) — postgres/redis
+- 1x Expense-tracker (Debian, 2GB RAM, 2 vCPU, 20GB disk)
+- 1x Monitoring      (Debian, 4GB RAM, 2 vCPU, 50GB disk)  — prometheus/grafana/loki
+- `olympus` Talos K8s cluster: 3x control plane + 2x worker (Cilium CNI, Proxmox CSI)
 
 ### Planned
-- 3x Talos OS control plane nodes (K8s)
-- 2x Talos OS worker nodes (K8s)
-- 2x Flatcar Container Linux VMs
-- 1x Monitoring/utility VM
+- Additional Talos clusters (blocks reserved in IP plan)
+- Flatcar Container Linux VMs
 
 ---
 
