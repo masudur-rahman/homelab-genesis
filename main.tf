@@ -50,8 +50,8 @@ module "vm_standard" {
   pool_id = module.structure.pool_ids[coalesce(each.value.pool, var.common_pool)]
 }
 
-module "vm_talos" {
-  source   = "./modules/vm-talos"
+module "talos_cluster" {
+  source   = "./modules/talos-cluster"
   for_each = var.talos_clusters
 
   proxmox_node        = var.proxmox_node
@@ -70,6 +70,8 @@ module "vm_talos" {
   talos_version      = each.value.talos_version
   kubernetes_version = each.value.kubernetes_version
   pm_api_endpoint    = var.pm_api_endpoint
+  csi_token_id       = var.csi_token_id
+  csi_token_secret   = var.csi_token_secret
   nameservers        = var.nameservers
 
   pool_gateway = each.value.gateway

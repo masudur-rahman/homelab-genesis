@@ -1,0 +1,25 @@
+config:
+  clusters:
+    - url: "${trimsuffix(pm_api_endpoint, "/")}/api2/json"
+      insecure: true
+      token_id: "${token_id}"
+      token_secret: "${token_secret}"
+      region: "${region}"
+
+node:
+  nodeSelector:
+    topology.kubernetes.io/zone: "${zone}"
+
+storageClass:
+  - name: proxmox-zfs
+    storage: local-zfs
+    reclaimPolicy: Delete
+    fstype: ext4
+    allowVolumeExpansion: true
+    annotations:
+      storageclass.kubernetes.io/is-default-class: "true"
+
+# Top-level metrics configuration (no controller/node nesting)
+metrics:
+  enabled: true
+  port: 8080   # default port, adjust if needed

@@ -167,31 +167,15 @@ variable "cluster_endpoint_port" {
   default     = 6443
 }
 
-variable "cilium_version" {
-  description = "Cilium Helm chart version"
-  type        = string
-  default     = "1.17.3"
-}
-
-variable "proxmox_csi_version" {
-  description = "Proxmox CSI plugin Helm chart version"
-  type        = string
-  default     = "0.5.5"
-}
-
-variable "pm_api_endpoint" {
-  description = "Proxmox API URL for CSI configuration"
-  type        = string
-}
-
 variable "topology_region" {
-  description = "Topology region label for CSI"
+  description = "Topology region label for node labels"
   type        = string
   default     = "homelab"
 }
 
 variable "topology_zone" {
-  description = "Topology zone label for CSI"
+  description = "Topology zone label for node labels"
   type        = string
   default     = "pve"
 }
+

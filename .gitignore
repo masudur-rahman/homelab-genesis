@@ -19,9 +19,8 @@ vars/secrets.json
 # Crash log files
 crash.log
 
-# Extracted kubeconfigs and secrets
-files/kubeconfigs/
-files/secrets/
+# Extracted kubeconfigs, secrets, and helm values (contain plaintext secrets)
+files/
 
 # Mac junk
 .DS_Store

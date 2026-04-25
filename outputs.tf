@@ -32,22 +32,21 @@ output "flatcar_nodes" {
 output "talos_clusters" {
   description = "Information of provisioned Talos clusters"
   value = {
-    for name, cluster in module.vm_talos : name => {
-      vms           = cluster.vm_ids
-      node_ips      = cluster.node_ips
-      health_status = cluster.health_status
+    for name, cluster in module.talos_cluster : name => {
+      vms      = cluster.vm_ids
+      node_ips = cluster.node_ips
     }
   }
 }
 
 output "talos_kubeconfigs" {
   description = "Kubeconfig YAML per Talos cluster"
-  value       = { for name, cluster in module.vm_talos : name => cluster.kubeconfig }
+  value       = { for name, cluster in module.talos_cluster : name => cluster.kubeconfig }
   sensitive   = true
 }
 
 output "talos_talosconfigs" {
   description = "Talosconfig YAML per Talos cluster"
-  value       = { for name, cluster in module.vm_talos : name => cluster.talosconfig }
+  value       = { for name, cluster in module.talos_cluster : name => cluster.talosconfig }
   sensitive   = true
 }

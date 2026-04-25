@@ -28,6 +28,6 @@ output "talos_iso_ids" {
 output "talos_installer_images" {
   description = "Talos Image Factory installer image references per version"
   value = {
-    for k, v in data.talos_image_factory_urls.this : v.talos_version => v.urls.installer
+    for k, v in data.talos_image_factory_urls.talos : v.talos_version => v.urls.installer
   }
 }

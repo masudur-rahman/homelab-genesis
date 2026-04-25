@@ -2,9 +2,6 @@ terraform {
   required_providers {
     proxmox = { source = "bpg/proxmox" }
     talos   = { source = "siderolabs/talos" }
-    tls     = { source = "hashicorp/tls" }
-    helm    = { source = "hashicorp/helm" }
-    local   = { source = "hashicorp/local" }
   }
 }
 

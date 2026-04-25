@@ -18,7 +18,7 @@ resource "proxmox_virtual_environment_download_file" "generic_iso" {
 }
 
 # --- 2. Talos Image Factory Pipeline ---
-data "talos_image_factory_extensions_versions" "this" {
+data "talos_image_factory_extensions_versions" "talos" {
   for_each = var.talos_images
 
   talos_version = each.value.version
@@ -28,23 +28,23 @@ data "talos_image_factory_extensions_versions" "this" {
 }
 
 # B. Generate Schematic (The "Recipe")
-resource "talos_image_factory_schematic" "this" {
+resource "talos_image_factory_schematic" "talos" {
   for_each = var.talos_images
 
   schematic = yamlencode({
     customization = {
       systemExtensions = {
-        officialExtensions = data.talos_image_factory_extensions_versions.this[each.key].extensions_info.*.name
+        officialExtensions = data.talos_image_factory_extensions_versions.talos[each.key].extensions_info.*.name
       }
     }
   })
 }
 
-data "talos_image_factory_urls" "this" {
+data "talos_image_factory_urls" "talos" {
   for_each = var.talos_images
 
   talos_version = each.value.version
-  schematic_id  = talos_image_factory_schematic.this[each.key].id
+  schematic_id  = talos_image_factory_schematic.talos[each.key].id
   platform      = "nocloud"
 }
 
@@ -57,7 +57,7 @@ resource "proxmox_virtual_environment_download_file" "talos_iso" {
 
   overwrite = false
 
-  file_name = "talos-${each.value.version}-${talos_image_factory_schematic.this[each.key].id}-${terraform.workspace}.iso"
+  file_name = "talos-${each.value.version}-${talos_image_factory_schematic.talos[each.key].id}-${terraform.workspace}.iso"
 
-  url = data.talos_image_factory_urls.this[each.key].urls.iso
+  url = data.talos_image_factory_urls.talos[each.key].urls.iso
 }
