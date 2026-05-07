@@ -3,6 +3,9 @@ ipam:
 
 kubeProxyReplacement: true
 
+l2announcements:
+  enabled: true
+
 k8sServiceHost: "${cluster_vip}"
 k8sServicePort: ${cluster_endpoint_port}
 
@@ -41,15 +44,15 @@ hubble:
     enabled: true
     tls:
       client:
-        cert: "${hubble_relay_cert}"
-        key: "${hubble_relay_key}"
+        cert: "${hubble_relay_client_cert}"
+        key: "${hubble_relay_client_key}"
+      server:
+        cert: "${hubble_relay_server_cert}"
+        key: "${hubble_relay_server_key}"
   tls:
     enabled: true
     auto:
       enabled: false
-    ca:
-      cert: "${cilium_ca_cert}"
-      key: "${cilium_ca_key}"
     server:
       cert: "${hubble_server_cert}"
       key: "${hubble_server_key}"

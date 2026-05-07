@@ -12,8 +12,10 @@ resource "local_file" "cilium_values" {
     cilium_ca_key         = base64encode(tls_private_key.cilium_ca.private_key_pem)
     hubble_server_cert    = base64encode(tls_locally_signed_cert.hubble_server_cert.cert_pem)
     hubble_server_key     = base64encode(tls_private_key.hubble_server_key.private_key_pem)
-    hubble_relay_cert     = base64encode(tls_locally_signed_cert.hubble_relay_cert.cert_pem)
-    hubble_relay_key      = base64encode(tls_private_key.hubble_relay_key.private_key_pem)
+    hubble_relay_client_cert     = base64encode(tls_locally_signed_cert.hubble_relay_client_cert.cert_pem)
+    hubble_relay_client_key      = base64encode(tls_private_key.hubble_relay_client_key.private_key_pem)
+    hubble_relay_server_cert     = base64encode(tls_locally_signed_cert.hubble_relay_server_cert.cert_pem)
+    hubble_relay_server_key      = base64encode(tls_private_key.hubble_relay_server_key.private_key_pem)
     cluster_vip           = var.cluster_vip
     cluster_endpoint_port = var.cluster_endpoint_port
   })
@@ -22,7 +24,8 @@ resource "local_file" "cilium_values" {
 
   depends_on = [
     tls_locally_signed_cert.hubble_server_cert,
-    tls_locally_signed_cert.hubble_relay_cert,
+    tls_locally_signed_cert.hubble_relay_client_cert,
+    tls_locally_signed_cert.hubble_relay_server_cert,
   ]
 }
 

@@ -30,7 +30,7 @@ variable "cilium_cluster_name" {
 variable "cilium_version" {
   description = "Cilium Helm chart version"
   type        = string
-  default     = "1.17.3"
+  # default     = "1.17.3"
 }
 
 # --- Proxmox CSI ---

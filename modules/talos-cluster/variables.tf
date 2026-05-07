@@ -124,7 +124,7 @@ variable "nameservers" {
 variable "cilium_version" {
   description = "Cilium Helm chart version"
   type        = string
-  default     = "1.17.3"
+  default     = "1.19.3"
 }
 
 variable "proxmox_csi_version" {
