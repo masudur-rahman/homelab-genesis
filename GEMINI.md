@@ -75,3 +75,4 @@ Adhere to this workflow for ALL changes:
 - [talos]: Deadlock occurs if agent { enabled = true } is set in proxmox_virtual_environment_vm before config is applied.
 - [helm]: Explicitly set kube_version in helm_template to avoid version incompatibility (default is 1.20.0).
 - [talos]: Best way to provide initial IP/Config on Proxmox without DHCP is the initialization block with user_data_file_id pointing to a Talos config snippet (nocloud platform).
+- [talos]: Use terraform_data with a destroy provisioner to run kubectl drain/delete before VM destruction for graceful node cleanup on scale-down.

@@ -56,6 +56,10 @@ resource "proxmox_virtual_environment_file" "talos_config" {
     data      = each.value.role == "cp" ? data.talos_machine_configuration.cp[each.key].machine_configuration : data.talos_machine_configuration.wk[each.key].machine_configuration
     file_name = "talos-${each.key}.yaml"
   }
+
+  # This ensures k8s_node_cleanup is created BEFORE the config file,
+  # and thus destroyed AFTER the VM and the config file are gone.
+  depends_on = [terraform_data.k8s_node_cleanup]
 }
 
 resource "proxmox_virtual_environment_vm" "talos" {

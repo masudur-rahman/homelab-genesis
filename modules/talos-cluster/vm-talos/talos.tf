@@ -154,3 +154,47 @@ resource "local_file" "talosconfig" {
   filename        = "${path.root}/files/secrets/${var.name}_talosconfig.yaml"
   file_permission = "0600"
 }
+
+# --- Graceful Node Cleanup (Stage 3: Remove from K8s after VM is gone) ---
+resource "terraform_data" "k8s_node_cleanup" {
+  for_each = local.all_nodes
+
+  input = {
+    node_name       = each.key
+    kubeconfig_path = "${path.root}/files/secrets/${var.name}_kubeconfig.yaml"
+  }
+
+  provisioner "local-exec" {
+    when    = destroy
+    command = <<-EOT
+      echo "Destruction Stage 3: Removing node ${self.input.node_name} from Kubernetes API..."
+      kubectl --kubeconfig "${self.input.kubeconfig_path}" \
+        delete node "${self.input.node_name}" \
+        --ignore-not-found || true
+    EOT
+  }
+}
+
+# --- Graceful Node Cleanup (Stage 1: Talos Reset before VM is touched) ---
+resource "terraform_data" "talos_reset" {
+  for_each = local.all_nodes
+
+  input = {
+    node_ip          = each.value.ip
+    talosconfig_path = "${path.root}/files/secrets/${var.name}_talosconfig.yaml"
+  }
+
+  provisioner "local-exec" {
+    when    = destroy
+    command = <<-EOT
+      echo "Stage 1: Resetting Talos node at ${self.input.node_ip}..."
+      talosctl --talosconfig "${self.input.talosconfig_path}" \
+        -n "${self.input.node_ip}" \
+        reset --graceful || true
+    EOT
+  }
+
+
+  # This ensures reset happens BEFORE VM destruction
+  depends_on = [proxmox_virtual_environment_vm.talos]
+}

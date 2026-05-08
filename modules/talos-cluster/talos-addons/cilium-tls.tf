@@ -104,7 +104,7 @@ resource "tls_cert_request" "hubble_relay_server" {
 
   dns_names = [
     "*.hubble-relay.cilium.io",
-    "hubble-relay.kube-system.svc.cluster.local",  # in-cluster access
+    "hubble-relay.kube-system.svc.cluster.local", # in-cluster access
     "hubble-relay",
   ]
 }
