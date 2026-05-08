@@ -45,6 +45,9 @@ locals {
     }
   })
 
+  # Paths
+  templates_dir = "${path.module}/templates"
+  secrets_dir   = "${path.root}/files/secrets"
 }
 
 # Control plane machine configuration
@@ -59,7 +62,7 @@ data "talos_machine_configuration" "cp" {
   kubernetes_version = var.kubernetes_version
 
   config_patches = compact([
-    templatefile("${path.module}/templates/machine-config.yaml.tftpl", {
+    templatefile("${local.templates_dir}/machine-config.yaml.tftpl", {
       ip            = each.value.ip
       gateway       = local.network_gateway
       nameservers   = var.nameservers
@@ -71,7 +74,7 @@ data "talos_machine_configuration" "cp" {
     }),
     local.cp_vip_patch[each.key],
     local.cp_cluster_patch,
-    each.value.ephemeral_volume_grow ? templatefile("${path.module}/templates/ephemeral-volume.yaml.tftpl", {
+    each.value.ephemeral_volume_grow ? templatefile("${local.templates_dir}/ephemeral-volume.yaml.tftpl", {
       grow     = each.value.ephemeral_volume_grow
       max_size = each.value.ephemeral_volume_max_size
       min_size = each.value.ephemeral_volume_min_size
@@ -92,7 +95,7 @@ data "talos_machine_configuration" "wk" {
   kubernetes_version = var.kubernetes_version
 
   config_patches = compact([
-    templatefile("${path.module}/templates/machine-config.yaml.tftpl", {
+    templatefile("${local.templates_dir}/machine-config.yaml.tftpl", {
       ip            = each.value.ip
       gateway       = local.network_gateway
       nameservers   = var.nameservers
@@ -102,7 +105,7 @@ data "talos_machine_configuration" "wk" {
       node_taints   = each.value.node_taints
       install_image = var.talos_install_image
     }),
-    each.value.ephemeral_volume_grow ? templatefile("${path.module}/templates/ephemeral-volume.yaml.tftpl", {
+    each.value.ephemeral_volume_grow ? templatefile("${local.templates_dir}/ephemeral-volume.yaml.tftpl", {
       grow     = each.value.ephemeral_volume_grow
       max_size = each.value.ephemeral_volume_max_size
       min_size = each.value.ephemeral_volume_min_size
@@ -145,13 +148,13 @@ resource "talos_cluster_kubeconfig" "admin" {
 
 resource "local_file" "kubeconfig" {
   content         = talos_cluster_kubeconfig.admin.kubeconfig_raw
-  filename        = "${path.root}/files/secrets/${var.name}_kubeconfig.yaml"
+  filename        = "${local.secrets_dir}/${var.name}_kubeconfig.yaml"
   file_permission = "0600"
 }
 
 resource "local_file" "talosconfig" {
   content         = data.talos_client_configuration.cluster.talos_config
-  filename        = "${path.root}/files/secrets/${var.name}_talosconfig.yaml"
+  filename        = "${local.secrets_dir}/${var.name}_talosconfig.yaml"
   file_permission = "0600"
 }
 
@@ -161,7 +164,7 @@ resource "terraform_data" "k8s_node_cleanup" {
 
   input = {
     node_name       = each.key
-    kubeconfig_path = "${path.root}/files/secrets/${var.name}_kubeconfig.yaml"
+    kubeconfig_path = "${local.secrets_dir}/${var.name}_kubeconfig.yaml"
   }
 
   provisioner "local-exec" {
@@ -181,7 +184,7 @@ resource "terraform_data" "talos_reset" {
 
   input = {
     node_ip          = each.value.ip
-    talosconfig_path = "${path.root}/files/secrets/${var.name}_talosconfig.yaml"
+    talosconfig_path = "${local.secrets_dir}/${var.name}_talosconfig.yaml"
   }
 
   provisioner "local-exec" {

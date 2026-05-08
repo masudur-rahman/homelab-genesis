@@ -9,6 +9,9 @@ locals {
 
   network_gateway = var.pool_gateway != null ? var.pool_gateway : var.common_gateway
   ip_cidr         = var.pool_cidr != null ? var.pool_cidr : var.common_cidr
+
+  # Paths
+  templates_dir = "${path.module}/templates"
 }
 
 resource "proxmox_virtual_environment_file" "ignition_config" {
@@ -19,7 +22,7 @@ resource "proxmox_virtual_environment_file" "ignition_config" {
   node_name    = var.proxmox_node
 
   source_raw {
-    data = templatefile("${path.module}/templates/ignition.json.tftpl", {
+    data = templatefile("${local.templates_dir}/ignition.json.tftpl", {
       hostname = "${var.name}-${format("%02d", count.index + 1)}"
       ssh_keys = var.ssh_keys
     })

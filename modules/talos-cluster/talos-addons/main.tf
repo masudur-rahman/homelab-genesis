@@ -4,10 +4,15 @@ terraform {
   }
 }
 
+locals {
+  templates_dir = "${path.module}/templates"
+  helm_dir      = "${path.root}/files/helm"
+}
+
 # --- Cilium Helm values ---
 
 resource "local_file" "cilium_values" {
-  content = templatefile("${path.module}/templates/cilium-values.yaml.tftpl", {
+  content = templatefile("${local.templates_dir}/cilium-values.yaml.tftpl", {
     cilium_ca_cert           = base64encode(tls_self_signed_cert.cilium_ca.cert_pem)
     cilium_ca_key            = base64encode(tls_private_key.cilium_ca.private_key_pem)
     hubble_server_cert       = base64encode(tls_locally_signed_cert.hubble_server_cert.cert_pem)
@@ -19,7 +24,7 @@ resource "local_file" "cilium_values" {
     cluster_vip              = var.cluster_vip
     cluster_endpoint_port    = var.cluster_endpoint_port
   })
-  filename        = "${path.root}/files/helm/${var.cluster_name}-cilium-values.yaml"
+  filename        = "${local.helm_dir}/${var.cluster_name}-cilium-values.yaml"
   file_permission = "0600"
 
   depends_on = [
@@ -32,14 +37,14 @@ resource "local_file" "cilium_values" {
 # --- Proxmox CSI Helm values ---
 
 resource "local_file" "csi_values" {
-  content = templatefile("${path.module}/templates/proxmox-csi-values.yaml.tftpl", {
+  content = templatefile("${local.templates_dir}/proxmox-csi-values.yaml.tftpl", {
     pm_api_endpoint = var.pm_api_endpoint
     token_id        = var.csi_token_id
     token_secret    = var.csi_token_secret
     region          = var.topology_region
     zone            = var.topology_zone
   })
-  filename        = "${path.root}/files/helm/${var.cluster_name}-csi-values.yaml"
+  filename        = "${local.helm_dir}/${var.cluster_name}-csi-values.yaml"
   file_permission = "0600"
 }
 
