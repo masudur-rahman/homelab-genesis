@@ -24,6 +24,7 @@ module "vm_talos" {
   talos_version      = var.talos_version
   kubernetes_version = var.kubernetes_version
   nameservers        = var.nameservers
+  extra_manifests    = var.extra_manifests
 
   pool_gateway = var.pool_gateway
   pool_cidr    = var.pool_cidr

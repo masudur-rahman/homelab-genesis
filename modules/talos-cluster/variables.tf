@@ -119,6 +119,15 @@ variable "nameservers" {
   default     = ["1.1.1.1", "8.8.8.8"]
 }
 
+variable "extra_manifests" {
+  description = "URLs of additional manifests to apply to the cluster"
+  type        = list(string)
+  default = [
+    "https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/main/deploy/standalone-install.yaml",
+    "https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml"
+  ]
+}
+
 # --- Addon versions ---
 
 variable "cilium_version" {

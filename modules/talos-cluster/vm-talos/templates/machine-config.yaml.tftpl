@@ -11,6 +11,10 @@ machine:
         routes:
           - network: 0.0.0.0/0
             gateway: ${gateway}
+%{ if is_cp && cluster_vip != "" ~}
+        vip:
+          ip: ${cluster_vip}
+%{ endif ~}
   install:
     disk: /dev/sda
     image: ${install_image}
@@ -30,4 +34,19 @@ machine:
           value: ${taint.value}
           effect: ${taint.effect}
 %{ endfor ~}
+%{ endif ~}
+
+%{ if is_cp ~}
+cluster:
+  network:
+    cni:
+      name: none
+  proxy:
+    disabled: true
+%{ if length(extra_manifests) > 0 ~}
+  extraManifests:
+%{ for manifest in extra_manifests ~}
+    - ${manifest}
+%{ endfor ~}
+%{ endif ~}
 %{ endif ~}

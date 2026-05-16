@@ -161,6 +161,12 @@ variable "nameservers" {
   default     = ["1.1.1.1", "8.8.8.8"]
 }
 
+variable "extra_manifests" {
+  description = "URLs of additional manifests to apply to the cluster"
+  type        = list(string)
+  default     = []
+}
+
 variable "cluster_endpoint_port" {
   description = "Kubernetes API server port"
   type        = number

@@ -53,7 +53,7 @@ resource "proxmox_virtual_environment_file" "talos_config" {
   node_name    = var.proxmox_node
 
   source_raw {
-    data      = each.value.role == "cp" ? data.talos_machine_configuration.cp[each.key].machine_configuration : data.talos_machine_configuration.wk[each.key].machine_configuration
+    data      = data.talos_machine_configuration.node[each.key].machine_configuration
     file_name = "talos-${each.key}.yaml"
   }
 
@@ -75,7 +75,8 @@ resource "proxmox_virtual_environment_vm" "talos" {
   boot_order    = ["scsi0", "ide3"]
 
   agent {
-    enabled = false
+    enabled = true
+    timeout = "20s" # Short timeout to prevent creation deadlock
   }
 
   cpu {

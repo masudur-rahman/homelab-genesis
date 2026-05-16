@@ -11,99 +11,35 @@ data "talos_client_configuration" "cluster" {
 }
 
 locals {
-  # CP-only: VIP on interface
-  cp_vip_patch = {
-    for name, node in local.cp_nodes : name => jsonencode({
-      machine = {
-        network = {
-          interfaces = [{
-            interface = "ens18"
-            vip = {
-              ip = var.cluster_vip
-            }
-          }]
-        }
-      }
-    })
-  }
-
-  # CP-only: cluster overrides (single value, not per-node)
-  cp_cluster_patch = jsonencode({
-    cluster = {
-      network = {
-        cni = {
-          name = "none"
-        }
-      }
-      proxy = {
-        disabled = true
-      }
-      extraManifests = [
-        "https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/main/deploy/standalone-install.yaml",
-        "https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml",
-      ]
-    }
-  })
-
   # Paths
   templates_dir = "${path.module}/templates"
   secrets_dir   = "${path.root}/files/secrets"
 }
 
-# Control plane machine configuration
-data "talos_machine_configuration" "cp" {
-  for_each = local.cp_nodes
+# Machine configuration for all nodes
+data "talos_machine_configuration" "node" {
+  for_each = local.all_nodes
 
   cluster_name       = var.name
   cluster_endpoint   = local.cluster_endpoint
-  machine_type       = "controlplane"
+  machine_type       = each.value.role == "cp" ? "controlplane" : "worker"
   machine_secrets    = talos_machine_secrets.cluster.machine_secrets
   talos_version      = var.talos_version
   kubernetes_version = var.kubernetes_version
 
   config_patches = compact([
     templatefile("${local.templates_dir}/machine-config.yaml.tftpl", {
-      ip            = each.value.ip
-      gateway       = local.network_gateway
-      nameservers   = var.nameservers
-      region        = var.topology_region
-      zone          = var.topology_zone
-      node_labels   = each.value.node_labels
-      node_taints   = each.value.node_taints
-      install_image = var.talos_install_image
-    }),
-    local.cp_vip_patch[each.key],
-    local.cp_cluster_patch,
-    each.value.ephemeral_volume_grow ? templatefile("${local.templates_dir}/ephemeral-volume.yaml.tftpl", {
-      grow     = each.value.ephemeral_volume_grow
-      max_size = each.value.ephemeral_volume_max_size
-      min_size = each.value.ephemeral_volume_min_size
-    }) : "",
-  ])
-
-}
-
-# Worker machine configuration
-data "talos_machine_configuration" "wk" {
-  for_each = local.wk_nodes
-
-  cluster_name       = var.name
-  cluster_endpoint   = local.cluster_endpoint
-  machine_type       = "worker"
-  machine_secrets    = talos_machine_secrets.cluster.machine_secrets
-  talos_version      = var.talos_version
-  kubernetes_version = var.kubernetes_version
-
-  config_patches = compact([
-    templatefile("${local.templates_dir}/machine-config.yaml.tftpl", {
-      ip            = each.value.ip
-      gateway       = local.network_gateway
-      nameservers   = var.nameservers
-      region        = var.topology_region
-      zone          = var.topology_zone
-      node_labels   = each.value.node_labels
-      node_taints   = each.value.node_taints
-      install_image = var.talos_install_image
+      ip              = each.value.ip
+      gateway         = local.network_gateway
+      nameservers     = var.nameservers
+      region          = var.topology_region
+      zone            = var.topology_zone
+      node_labels     = each.value.node_labels
+      node_taints     = each.value.node_taints
+      install_image   = var.talos_install_image
+      is_cp           = each.value.role == "cp"
+      cluster_vip     = var.cluster_vip
+      extra_manifests = var.extra_manifests
     }),
     each.value.ephemeral_volume_grow ? templatefile("${local.templates_dir}/ephemeral-volume.yaml.tftpl", {
       grow     = each.value.ephemeral_volume_grow
@@ -118,13 +54,12 @@ resource "talos_machine_configuration_apply" "node" {
   for_each = local.all_nodes
 
   client_configuration        = talos_machine_secrets.cluster.client_configuration
-  machine_configuration_input = each.value.role == "cp" ? data.talos_machine_configuration.cp[each.key].machine_configuration : data.talos_machine_configuration.wk[each.key].machine_configuration
+  machine_configuration_input = data.talos_machine_configuration.node[each.key].machine_configuration
   node                        = each.value.ip
 
   depends_on = [
     proxmox_virtual_environment_vm.talos,
-    data.talos_machine_configuration.cp,
-    data.talos_machine_configuration.wk,
+    data.talos_machine_configuration.node,
   ]
 }
 
