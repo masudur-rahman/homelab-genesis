@@ -95,8 +95,8 @@ authoritative reference for IP planning.
 | `.100`–`.119`    | 20   | Talos cluster #3 (future)              | same per-block layout                           |
 | `.120`–`.129`    | 10   | Flatcar / container VMs                |                                                 |
 | `.130`–`.149`    | 20   | Reserved floating                      | CSI floating, extra VM types, misc              |
-| `.150`–`.169`    | 20   | K8s LoadBalancer — fixed pool          | DNS-pinned services                             |
-| `.170`–`.179`    | 10   | K8s LoadBalancer — dynamic pool        | auto-assigned                                   |
+| `.150`–`.169`    | 20   | K8s LoadBalancer pool (cl #1 `olympus`)| auto-assigned; pin via `lbipam.cilium.io/ips`   |
+| `.170`–`.179`    | 10   | Reserved — future LB / per-cluster     | unused                                          |
 | `.180`–`.229`    | 50   | Router DHCP (regular + guest network)  |                                                 |
 | `.230`–`.249`    | 20   | Reserved — expansion                   |                                                 |
 | `.250`–`.252`    | 3    | Reserved                               |                                                 |

@@ -46,7 +46,7 @@ make validate          # validate syntax
 ## Learned
 - [state]: Use `terraform state rm -state=states/terraform.tfstate.d/{env}/terraform.tfstate {address}` if workspace selection fails to resolve state paths.
 - [auth]: Proxmox provider requires SSH identities loaded in `ssh-agent` for authentication (`ssh-add <key_path>`).
-- [talos]: First VirtIO network interface on Proxmox VMs (Talos v1.12) is `ens18`, not `eth0` or `enp0s1`.
+- [talos]: `ens18` is only the Talos **config-layer altname** (AddressSpec) accepted in `machine.network.interfaces`. The **runtime kernel netdev is `eth0`** (AddressStatus) — verified on live olympus cluster. Anything matching real devices (Cilium L2 announcements `interfaces`, Cilium auto-detected `Devices: eth0`) must use `eth0`, NOT `ens18`. Verify with `talosctl -n <ip> get addresses` (LINK column) or `cilium-dbg status --verbose | grep Devices`.
 - [talos]: Must use Image Factory nocloud installer image (`machine.install.image`) — generic installer creates `metal` boot assets, breaking NoCloud hostname/platform detection after install to disk.
 - [talos]: Hostname on NoCloud comes from SMBIOS serial (`smbios { serial = "ds=nocloud;h=<name>" }`). Meta-data `local-hostname`/`hostname` fields are ignored in practice. `machine.network.hostname` in config is rejected on NoCloud platform.
 - [cilium]: Talos 1.9+ requires specific Cilium Helm values (disabling `cgroup.autoMount`) and privileged `securityContext`.

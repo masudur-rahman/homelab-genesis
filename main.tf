@@ -69,6 +69,7 @@ module "talos_cluster" {
 
   talos_version      = each.value.talos_version
   kubernetes_version = each.value.kubernetes_version
+  load_balancer      = each.value.load_balancer
   pm_api_endpoint    = var.pm_api_endpoint
   csi_token_id       = var.csi_token_id
   csi_token_secret   = var.csi_token_secret

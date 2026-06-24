@@ -5,8 +5,9 @@ terraform {
 }
 
 locals {
-  templates_dir = "${path.module}/templates"
-  helm_dir      = "${path.root}/files/helm"
+  templates_dir   = "${path.module}/templates"
+  helm_dir        = "${path.root}/files/helm"
+  lb_ipam_enabled = var.lb_ipam != null
 }
 
 # --- Cilium Helm values ---
@@ -45,6 +46,20 @@ resource "local_file" "csi_values" {
     zone            = var.topology_zone
   })
   filename        = "${local.helm_dir}/${var.cluster_name}-csi-values.yaml"
+  file_permission = "0600"
+}
+
+# --- Cilium LB-IPAM pools + L2 announcement policy ---
+
+resource "local_file" "cilium_lb_ipam" {
+  count = local.lb_ipam_enabled ? 1 : 0
+
+  content = templatefile("${local.templates_dir}/cilium-lb-ipam.yaml.tftpl", {
+    range_start_ip = cidrhost(var.lb_ipam.network_cidr, var.lb_ipam.range_start)
+    range_stop_ip  = cidrhost(var.lb_ipam.network_cidr, var.lb_ipam.range_stop)
+    l2_interface   = var.lb_ipam.l2_interface
+  })
+  filename        = "${local.helm_dir}/${var.cluster_name}-cilium-lb-ipam.yaml"
   file_permission = "0600"
 }
 
@@ -102,6 +117,34 @@ resource "terraform_data" "cilium_install" {
   }
 
   depends_on = [terraform_data.wait_for_api]
+}
+
+# --- Apply Cilium LB-IPAM pools + L2 policy (CRDs ship with Cilium) ---
+
+resource "terraform_data" "cilium_lbipam_apply" {
+  count = local.lb_ipam_enabled ? 1 : 0
+
+  input = {
+    kubeconfig = var.kubeconfig_path
+    manifest   = local_file.cilium_lb_ipam[0].filename
+  }
+
+  triggers_replace = [
+    sha256(local_file.cilium_lb_ipam[0].content),
+  ]
+
+  provisioner "local-exec" {
+    command     = "kubectl apply -f ${self.input.manifest} --kubeconfig ${self.input.kubeconfig}"
+    interpreter = ["/bin/bash", "-c"]
+  }
+
+  provisioner "local-exec" {
+    when        = destroy
+    command     = "kubectl delete -f ${self.output.manifest} --kubeconfig ${self.output.kubeconfig} 2>/dev/null || true"
+    interpreter = ["/bin/bash", "-c"]
+  }
+
+  depends_on = [terraform_data.cilium_install]
 }
 
 # --- Helm install: Proxmox CSI ---

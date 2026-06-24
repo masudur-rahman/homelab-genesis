@@ -33,6 +33,24 @@ variable "cilium_version" {
   # default     = "1.17.3"
 }
 
+# --- LoadBalancer IPAM (Cilium LB-IPAM + L2 announcements) ---
+
+variable "lb_ipam" {
+  description = <<-EOT
+    Cilium LoadBalancer IPAM + L2 announcement config. Null disables it.
+    Renders one CiliumLoadBalancerIPPool (auto-assigned range) and a
+    CiliumL2AnnouncementPolicy. range_start/range_stop are host offsets
+    within network_cidr (e.g. 150 -> 10.66.0.150).
+  EOT
+  type = object({
+    network_cidr = string
+    l2_interface = string
+    range_start  = number
+    range_stop   = number
+  })
+  default = null
+}
+
 # --- Proxmox CSI ---
 
 variable "csi_token_id" {

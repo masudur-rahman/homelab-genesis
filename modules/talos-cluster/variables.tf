@@ -99,6 +99,24 @@ variable "worker_nodes" {
   })
 }
 
+# --- LoadBalancer (Cilium LB-IPAM + L2 announcements) ---
+
+variable "load_balancer" {
+  description = <<-EOT
+    Per-cluster Cilium LoadBalancer config. Null disables LoadBalancer support.
+    range_start/range_stop are host offsets within the cluster's network CIDR
+    (pool_cidr or common_cidr). Each cluster carves its own slice.
+    l2_interface is the kernel netdev Cilium announces on (eth0 on Talos/Proxmox
+    VirtIO; ens18 is only the Talos config-layer altname, not what Cilium sees).
+  EOT
+  type = object({
+    l2_interface = optional(string, "eth0")
+    range_start  = number
+    range_stop   = number
+  })
+  default = null
+}
+
 # --- Talos/K8s versions ---
 
 variable "talos_version" {

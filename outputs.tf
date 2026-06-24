@@ -38,15 +38,3 @@ output "talos_clusters" {
     }
   }
 }
-
-output "talos_kubeconfigs" {
-  description = "Kubeconfig YAML per Talos cluster"
-  value       = { for name, cluster in module.talos_cluster : name => cluster.kubeconfig }
-  sensitive   = true
-}
-
-output "talos_talosconfigs" {
-  description = "Talosconfig YAML per Talos cluster"
-  value       = { for name, cluster in module.talos_cluster : name => cluster.talosconfig }
-  sensitive   = true
-}

@@ -1,0 +1,20 @@
+# Cilium LB-IPAM pool + L2 announcement policy.
+# Single range, auto-assigned (no serviceSelector) to any LoadBalancer service.
+# Pin a specific IP from the range with the `lbipam.cilium.io/ips` annotation.
+apiVersion: cilium.io/v2
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: default-pool
+spec:
+  blocks:
+    - start: "${range_start_ip}"
+      stop: "${range_stop_ip}"
+---
+apiVersion: cilium.io/v2alpha1
+kind: CiliumL2AnnouncementPolicy
+metadata:
+  name: default-l2
+spec:
+  loadBalancerIPs: true
+  interfaces:
+    - "^${l2_interface}$"

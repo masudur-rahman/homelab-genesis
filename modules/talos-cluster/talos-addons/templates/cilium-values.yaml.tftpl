@@ -6,6 +6,11 @@ kubeProxyReplacement: true
 l2announcements:
   enabled: true
 
+# L2 announcements increase API usage (lease renewals); size the rate limit.
+k8sClientRateLimit:
+  qps: 10
+  burst: 20
+
 k8sServiceHost: "${cluster_vip}"
 k8sServicePort: ${cluster_endpoint_port}
 

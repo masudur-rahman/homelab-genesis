@@ -44,5 +44,12 @@ module "talos_addons" {
   csi_token_id        = var.csi_token_id
   csi_token_secret    = var.csi_token_secret
 
+  lb_ipam = var.load_balancer == null ? null : {
+    network_cidr = coalesce(var.pool_cidr, var.common_cidr)
+    l2_interface = var.load_balancer.l2_interface
+    range_start  = var.load_balancer.range_start
+    range_stop   = var.load_balancer.range_stop
+  }
+
   depends_on = [module.vm_talos]
 }

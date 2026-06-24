@@ -145,6 +145,11 @@ variable "talos_clusters" {
     pool               = optional(string)
     gateway            = optional(string)
     cidr               = optional(string)
+    load_balancer = optional(object({
+      l2_interface = optional(string, "eth0")
+      range_start  = number
+      range_stop   = number
+    }))
     control_plane = object({
       count       = number
       cpu         = number
