@@ -1,3 +1,5 @@
 creation_rules:
   - path_regex: secrets\.json$
     age: age16ynclpxtypz8x39af08q4k807kne4f4wqd4t8fs9mw2uqealle3qktavvj
+  - path_regex: files/secrets/.*\.ya?ml$
+    age: age16ynclpxtypz8x39af08q4k807kne4f4wqd4t8fs9mw2uqealle3qktavvj
