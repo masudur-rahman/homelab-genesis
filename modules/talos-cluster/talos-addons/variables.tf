@@ -33,6 +33,12 @@ variable "cilium_version" {
   # default     = "1.17.3"
 }
 
+variable "gateway_api_version" {
+  description = "Kubernetes Gateway API release tag for the standard CRDs (required by Cilium gatewayAPI)"
+  type        = string
+  default     = "v1.2.1"
+}
+
 # --- LoadBalancer IPAM (Cilium LB-IPAM + L2 announcements) ---
 
 variable "lb_ipam" {

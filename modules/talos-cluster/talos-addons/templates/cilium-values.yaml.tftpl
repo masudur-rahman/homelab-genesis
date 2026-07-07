@@ -38,6 +38,9 @@ securityContext:
       - SYS_ADMIN
       - SYS_RESOURCE
 
+gatewayAPI:
+  enabled: true
+
 tls:
   ca:
     cert: "${cilium_ca_cert}"

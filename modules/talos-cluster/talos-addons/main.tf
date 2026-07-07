@@ -8,6 +8,11 @@ locals {
   templates_dir   = "${path.module}/templates"
   helm_dir        = "${path.root}/files/helm"
   lb_ipam_enabled = var.lb_ipam != null
+
+  # Gateway API experimental channel: superset of standard + all experimental
+  # CRDs. Cilium's gateway controller needs the experimental TLSRoute CRD
+  # (TLSRouteList), absent from standard-install.yaml.
+  gateway_api_url = "https://github.com/kubernetes-sigs/gateway-api/releases/download/${var.gateway_api_version}/experimental-install.yaml"
 }
 
 # --- Cilium Helm values ---
@@ -86,6 +91,41 @@ resource "terraform_data" "wait_for_api" {
   }
 }
 
+# --- Gateway API CRDs (required before Cilium gatewayAPI feature) ---
+
+resource "terraform_data" "gateway_api_crds" {
+  input = {
+    kubeconfig = var.kubeconfig_path
+    url        = local.gateway_api_url
+  }
+
+  triggers_replace = [local.gateway_api_url]
+
+  provisioner "local-exec" {
+    # kubectl apply returns before CRDs are Established in API discovery.
+    # Wait so the subsequent Cilium helm install sees the GatewayClass CRD
+    # via its capability check (else the GatewayClass template is skipped).
+    command     = <<-EOT
+      kubectl apply -f ${self.input.url} --kubeconfig ${self.input.kubeconfig}
+      kubectl wait --for condition=established --timeout=60s \
+        crd/gatewayclasses.gateway.networking.k8s.io \
+        crd/gateways.gateway.networking.k8s.io \
+        crd/httproutes.gateway.networking.k8s.io \
+        crd/tlsroutes.gateway.networking.k8s.io \
+        --kubeconfig ${self.input.kubeconfig}
+    EOT
+    interpreter = ["/bin/bash", "-c"]
+  }
+
+  provisioner "local-exec" {
+    when        = destroy
+    command     = "kubectl delete -f ${self.output.url} --kubeconfig ${self.output.kubeconfig} 2>/dev/null || true"
+    interpreter = ["/bin/bash", "-c"]
+  }
+
+  depends_on = [terraform_data.wait_for_api]
+}
+
 # --- Helm install: Cilium CNI ---
 
 resource "terraform_data" "cilium_install" {
@@ -116,7 +156,7 @@ resource "terraform_data" "cilium_install" {
     interpreter = ["/bin/bash", "-c"]
   }
 
-  depends_on = [terraform_data.wait_for_api]
+  depends_on = [terraform_data.gateway_api_crds]
 }
 
 # --- Apply Cilium LB-IPAM pools + L2 policy (CRDs ship with Cilium) ---
